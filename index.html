@@ -1,0 +1,2983 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGEAN CORE // EGE SUNAR</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Fira+Code:wght@400;500;600;700&family=Orbitron:wght@600;800;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            background-color: #020306;
+            color: #e2e8f0;
+            font-family: 'Fira Code', monospace;
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+            user-select: none;
+        }
+
+        canvas {
+            max-width: 100% !important;
+            display: block;
+        }
+
+        /* =========================================
+           GÜVENLİK ENGELİ (BAN) EKRANI
+           ========================================= */
+        #ban-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: radial-gradient(circle at center, #2b050a 0%, #050102 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        #ban-screen.active {
+            display: flex;
+        }
+
+        .ban-box {
+            max-width: 620px;
+            width: 100%;
+            background: rgba(15, 2, 5, 0.94);
+            border: 2px solid #ff003c;
+            border-radius: 16px;
+            padding: 36px 24px;
+            box-shadow: 0 0 60px rgba(255, 0, 60, 0.45), inset 0 0 25px rgba(255, 0, 60, 0.2);
+            animation: banPulse 1.6s infinite alternate;
+        }
+
+        @keyframes banPulse {
+            from { box-shadow: 0 0 35px rgba(255, 0, 60, 0.35); }
+            to { box-shadow: 0 0 70px rgba(255, 0, 60, 0.75); }
+        }
+
+        .ban-icon { font-size: 3.4rem; margin-bottom: 12px; }
+
+        .ban-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.5rem, 4vw, 2.4rem);
+            font-weight: 900;
+            color: #ff003c;
+            letter-spacing: 2px;
+            margin-bottom: 14px;
+            text-shadow: 0 0 18px rgba(255, 0, 60, 0.8);
+        }
+
+        .ban-desc {
+            font-size: 0.92rem;
+            color: #fda4af;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .ban-code {
+            display: inline-block;
+            background: rgba(255, 0, 60, 0.15);
+            border: 1px solid rgba(255, 0, 60, 0.5);
+            color: #ff4d79;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            letter-spacing: 1.5px;
+        }
+
+        .admin-unban-area {
+            position: fixed;
+            bottom: 12px;
+            right: 12px;
+            opacity: 0.25;
+            transition: opacity 0.3s;
+            display: flex;
+            gap: 6px;
+        }
+        .admin-unban-area:hover { opacity: 1; }
+        .admin-unban-area input {
+            background: #0f0205;
+            border: 1px solid #ff003c;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            width: 110px;
+            outline: none;
+        }
+        .admin-unban-area button {
+            background: #ff003c;
+            color: #fff;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            cursor: pointer;
+        }
+
+        /* =========================================
+           1. BÖLÜM: KODER GİRİŞ & AUTH EKRANI
+           ========================================= */
+        #intro-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: radial-gradient(circle at center, #07111a 0%, #020306 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        #intro-screen.fade-out {
+            opacity: 0;
+            transform: scale(1.06);
+            pointer-events: none;
+        }
+
+        #cyber-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #intro-screen::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.22),
+                rgba(0, 0, 0, 0.22) 2px,
+                transparent 2px,
+                transparent 4px
+            );
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .hero-terminal {
+            position: relative;
+            z-index: 3;
+            max-width: 820px;
+            width: 100%;
+            background: rgba(5, 9, 16, 0.88);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 255, 170, 0.4);
+            border-radius: 16px;
+            padding: 34px 28px;
+            text-align: center;
+            box-shadow: 0 0 65px rgba(0, 255, 170, 0.16), inset 0 0 30px rgba(0, 180, 255, 0.08);
+            animation: heroAppear 0.9s ease;
+        }
+
+        @keyframes heroAppear {
+            from { opacity: 0; transform: translateY(25px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .terminal-top-tag {
+            display: inline-block;
+            font-size: 0.76rem;
+            color: #00ffaa;
+            background: rgba(0, 255, 170, 0.1);
+            border: 1px solid rgba(0, 255, 170, 0.35);
+            padding: 5px 14px;
+            border-radius: 20px;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+
+        .welcome-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.3rem, 3.8vw, 2.7rem);
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1.25;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            word-break: break-word;
+            text-shadow: 
+                0 0 12px rgba(255, 255, 255, 0.6),
+                0 0 28px #00ffaa,
+                0 0 55px #00b8ff;
+        }
+
+        .welcome-title span {
+            background: linear-gradient(90deg, #00ffaa, #00f0ff, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+            filter: drop-shadow(0 0 18px rgba(0, 255, 170, 0.5));
+        }
+
+        .typing-subtitle {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            min-height: 22px;
+            margin-bottom: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .typing-cursor {
+            color: #00ffaa;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* =========================================
+           HACKER / KODER LOGIN FORMU
+           ========================================= */
+        .coder-auth-box {
+            max-width: 440px;
+            margin: 0 auto;
+            background: rgba(2, 5, 10, 0.92);
+            border: 1px solid rgba(0, 240, 255, 0.35);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
+            box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.06);
+        }
+
+        .auth-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 8px;
+            margin-bottom: 14px;
+            font-size: 0.72rem;
+            color: #38bdf8;
+            letter-spacing: 1px;
+        }
+
+        .auth-dots {
+            display: flex;
+            gap: 5px;
+        }
+        .auth-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff5f56;
+        }
+        .auth-dots span:nth-child(2) { background: #ffbd2e; }
+        .auth-dots span:nth-child(3) { background: #27c93f; }
+
+        .input-group {
+            margin-bottom: 14px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.74rem;
+            color: #00ffaa;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+
+        .cyber-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: rgba(10, 16, 28, 0.9);
+            border: 1px solid rgba(0, 255, 170, 0.3);
+            border-radius: 8px;
+            transition: all 0.25s ease;
+        }
+
+        .cyber-input-wrap:focus-within {
+            border-color: #00f0ff;
+            box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+        }
+
+        .input-prefix {
+            padding: 0 10px;
+            color: #38bdf8;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .cyber-input-wrap input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            padding: 11px 10px 11px 0;
+            outline: none;
+            user-select: text;
+        }
+
+        .toggle-pass-btn {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            padding: 0 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+        .toggle-pass-btn:hover { color: #00ffaa; }
+
+        .auth-error-msg {
+            min-height: 18px;
+            font-size: 0.75rem;
+            color: #ff4d6d;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        #enter-btn {
+            width: 100%;
+            background: linear-gradient(135deg, rgba(0, 255, 170, 0.2), rgba(0, 180, 255, 0.22));
+            border: 1px solid #00ffaa;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            padding: 13px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 0 22px rgba(0, 255, 170, 0.3), inset 0 0 12px rgba(0, 255, 170, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        #enter-btn:hover {
+            background: #00ffaa;
+            color: #020306;
+            box-shadow: 0 0 40px #00ffaa;
+            transform: translateY(-1px);
+        }
+
+        .auth-footer-tools {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+
+        .quick-fill-link {
+            color: #38bdf8;
+            background: none;
+            border: none;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .quick-fill-link:hover { color: #00ffaa; }
+
+        /* =========================================
+           "EGE SUNAR" GLITCH GEÇİŞ EKRANI
+           ========================================= */
+        #ege-splash {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: #020306;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow: hidden;
+            padding: 16px;
+        }
+
+        #ege-splash.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .splash-terminal-box {
+            position: relative;
+            z-index: 3;
+            width: 100%;
+            max-width: 720px;
+            background: rgba(5, 8, 14, 0.92);
+            border: 1px solid rgba(0, 255, 170, 0.45);
+            border-radius: 12px;
+            padding: 28px 22px;
+            box-shadow: 0 0 50px rgba(0, 255, 170, 0.2);
+            text-align: center;
+        }
+
+        .boot-logs {
+            text-align: left;
+            font-size: 0.76rem;
+            color: #00ffaa;
+            margin-bottom: 18px;
+            min-height: 68px;
+            line-height: 1.5;
+            border-left: 2px solid #00ffaa;
+            padding-left: 12px;
+        }
+
+        .coder-present-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.9rem, 6vw, 4.6rem);
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 6px;
+            position: relative;
+            display: inline-block;
+            margin: 10px 0 18px 0;
+            text-shadow: 0 0 10px #00ffaa, 0 0 30px #00ffaa, 0 0 60px #00b8ff;
+            animation: glitchSkew 1.5s infinite linear alternate-reverse;
+        }
+
+        .coder-present-title::before,
+        .coder-present-title::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .coder-present-title::before {
+            left: 3px;
+            text-shadow: -2px 0 #ff0055;
+            clip-path: inset(20% 0 50% 0);
+            animation: glitchAnim1 0.8s infinite linear alternate-reverse;
+        }
+
+        .coder-present-title::after {
+            left: -3px;
+            text-shadow: 2px 0 #00f0ff;
+            clip-path: inset(60% 0 10% 0);
+            animation: glitchAnim2 0.6s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitchAnim1 {
+            0% { clip-path: inset(10% 0 70% 0); }
+            50% { clip-path: inset(45% 0 20% 0); }
+            100% { clip-path: inset(75% 0 5% 0); }
+        }
+
+        @keyframes glitchAnim2 {
+            0% { clip-path: inset(65% 0 10% 0); }
+            50% { clip-path: inset(15% 0 55% 0); }
+            100% { clip-path: inset(35% 0 30% 0); }
+        }
+
+        @keyframes glitchSkew {
+            0%, 60%, 100% { transform: skew(0deg); }
+            20% { transform: skew(-1deg); }
+            40% { transform: skew(1deg); }
+        }
+
+        .splash-code-tag {
+            font-size: 0.82rem;
+            color: #38bdf8;
+            letter-spacing: 2px;
+            margin-bottom: 18px;
+        }
+
+        .splash-loader {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 255, 170, 0.3);
+        }
+
+        .splash-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #00ffaa, #00b8ff, #a855f7);
+            box-shadow: 0 0 15px #00ffaa;
+            transition: width 2.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* =========================================
+           2. BÖLÜM: ANA KODLAMA AKADEMİSİ + YAN ASİSTAN
+           ========================================= */
+        #main-app {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            display: none;
+            flex-direction: column;
+        }
+
+        #main-app.active {
+            display: flex;
+        }
+
+        #matrix-bg {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.42;
+            pointer-events: none;
+        }
+
+        .top-navbar {
+            position: relative;
+            z-index: 15;
+            min-height: 58px;
+            background: rgba(8, 10, 15, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 255, 170, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 20px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.7);
+            flex-shrink: 0;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: #00ffaa;
+            letter-spacing: 2px;
+            text-shadow: 0 0 12px rgba(0, 255, 170, 0.6);
+        }
+
+        .logo span { color: #fff; }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .coder-user-tag {
+            background: rgba(0, 255, 170, 0.12);
+            border: 1px solid rgba(0, 255, 170, 0.4);
+            color: #00ffaa;
+            padding: 5px 11px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        #connectAssistantBtn {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(168, 85, 247, 0.25));
+            border: 1px solid #00f0ff;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 18px rgba(0, 240, 255, 0.3);
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        #connectAssistantBtn:hover, #connectAssistantBtn.connected {
+            background: #00f0ff;
+            color: #020306;
+            box-shadow: 0 0 28px #00f0ff;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ffaa;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #00ffaa;
+            animation: pulseAnim 1.4s infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulseAnim {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.5; }
+        }
+
+        .sys-info { font-size: 0.78rem; color: #00ffaa; }
+
+        .workspace {
+            position: relative;
+            z-index: 5;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            gap: 16px;
+            padding: 16px 20px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .academy-view {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            background: rgba(7, 10, 16, 0.9);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(0, 255, 170, 0.38);
+            border-radius: 14px;
+            padding: 18px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.92);
+            transition: all 0.35s ease;
+        }
+
+        .academy-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .lang-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .lang-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #94a3b8;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: 0.25s;
+        }
+
+        .lang-btn:hover, .lang-btn.active {
+            background: rgba(0, 255, 170, 0.18);
+            border-color: #00ffaa;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(0, 255, 170, 0.25);
+        }
+
+        .stats-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .rank-badge {
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid #38bdf8;
+            color: #bae6fd;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.74rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .rank-badge.developer-god {
+            background: linear-gradient(135deg, rgba(250, 204, 21, 0.28), rgba(234, 179, 8, 0.2));
+            border: 1px solid #facc15;
+            color: #fef08a;
+            box-shadow: 0 0 20px rgba(250, 204, 21, 0.65);
+            text-shadow: 0 0 10px #facc15;
+        }
+
+        .xp-badge {
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid #a855f7;
+            color: #e9d5ff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.76rem;
+            font-weight: 700;
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
+        }
+
+        .progress-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-progress-bar {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .step-pill {
+            flex: 1;
+            height: 7px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: 0.25s;
+            cursor: pointer;
+        }
+        .step-pill:hover { background: rgba(255, 255, 255, 0.3); }
+        .step-pill.done { background: #00ffaa; box-shadow: 0 0 8px #00ffaa; }
+        .step-pill.current { background: #38bdf8; box-shadow: 0 0 8px #38bdf8; }
+
+        .smooth-track {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 255, 170, 0.25);
+        }
+        .smooth-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00ffaa, #38bdf8, #facc15);
+            box-shadow: 0 0 12px #00ffaa;
+            transition: width 0.3s ease;
+        }
+
+        .jump-step-box {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+        .jump-step-box input {
+            width: 82px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(0, 255, 170, 0.35);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.74rem;
+            outline: none;
+            user-select: text;
+        }
+        .jump-step-box button {
+            background: rgba(0, 255, 170, 0.18);
+            border: 1px solid #00ffaa;
+            color: #00ffaa;
+            padding: 4px 9px;
+            border-radius: 6px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .jump-step-box button:hover {
+            background: #00ffaa;
+            color: #000;
+        }
+
+        .academy-body {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1.15fr;
+            gap: 18px;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .lesson-card {
+            background: rgba(4, 6, 10, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-y: auto;
+        }
+
+        .step-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .step-indicator { color: #38bdf8; font-size: 0.78rem; letter-spacing: 1.2px; font-weight: 700; }
+
+        .status-tag {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: rgba(255, 189, 46, 0.15);
+            border: 1px solid #ffbd2e;
+            color: #ffbd2e;
+        }
+        .status-tag.completed {
+            background: rgba(0, 255, 170, 0.15);
+            border-color: #00ffaa;
+            color: #00ffaa;
+        }
+
+        .lesson-title { font-family: 'Orbitron', sans-serif; font-size: 1.08rem; color: #fff; margin-bottom: 10px; }
+        .lesson-desc { font-size: 0.85rem; line-height: 1.55; color: #cbd5e1; margin-bottom: 12px; }
+
+        .mission-box {
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .mission-title { font-family: 'Orbitron', sans-serif; font-size: 0.76rem; color: #38bdf8; margin-bottom: 5px; letter-spacing: 1px; }
+        .mission-text { font-size: 0.83rem; color: #f1f5f9; line-height: 1.5; }
+
+        .lesson-tip {
+            background: rgba(0, 255, 170, 0.06);
+            border-left: 3px solid #00ffaa;
+            padding: 10px 12px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.79rem;
+            color: #a7f3d0;
+        }
+
+        .step-nav { display: flex; justify-content: space-between; margin-top: 14px; gap: 10px; }
+
+        .step-btn {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: 0.25s;
+        }
+        .step-btn:hover:not(:disabled) { background: #00ffaa; color: #000; border-color: #00ffaa; }
+        .step-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .code-playground {
+            background: #04060a;
+            border: 1px solid rgba(0, 255, 170, 0.3);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .editor-bar {
+            background: rgba(255, 255, 255, 0.04);
+            padding: 9px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.78rem;
+            color: #94a3b8;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .editor-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        .helper-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #cbd5e1;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.74rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .helper-btn:hover { background: rgba(255, 255, 255, 0.18); color: #fff; }
+
+        .run-code-btn {
+            background: #00ffaa;
+            color: #000;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .run-code-btn:hover { transform: scale(1.04); box-shadow: 0 0 15px #00ffaa; }
+
+        #codeEditorArea {
+            flex: 1;
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #38bdf8;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.94rem;
+            line-height: 1.6;
+            padding: 14px;
+            resize: none;
+            outline: none;
+            user-select: text;
+        }
+
+        .console-output {
+            height: 140px;
+            background: #020305;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 10px 14px;
+            font-size: 0.84rem;
+            color: #00ffaa;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .console-label { font-size: 0.7rem; color: #64748b; margin-bottom: 5px; display: block; }
+        #consoleResult { white-space: pre-wrap; line-height: 1.45; }
+
+        /* =========================================
+           YAN TARAF: EGE'NİN AI ASİSTAN PANELİ (MASAÜSTÜ)
+           ========================================= */
+        .assistant-sidebar {
+            width: 370px;
+            flex-shrink: 0;
+            height: 100%;
+            background: rgba(6, 10, 18, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 240, 255, 0.45);
+            border-radius: 14px;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 0 45px rgba(0, 240, 255, 0.18);
+            overflow: hidden;
+            animation: slideInRight 0.35s ease;
+        }
+
+        .assistant-sidebar.open {
+            display: flex;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .assistant-header {
+            background: linear-gradient(90deg, rgba(0, 240, 255, 0.15), rgba(168, 85, 247, 0.15));
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(0, 240, 255, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .assistant-identity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ai-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #00f0ff 0%, #0284c7 70%);
+            box-shadow: 0 0 15px #00f0ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            color: #000;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+        }
+
+        .ai-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .ai-status {
+            font-size: 0.7rem;
+            color: #00ffaa;
+        }
+
+        .close-ai-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #cbd5e1;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+        .close-ai-btn:hover { background: #ff3250; color: #fff; border-color: #ff3250; }
+
+        .ai-chat-body {
+            flex: 1;
+            padding: 14px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            user-select: text;
+        }
+
+        .ai-chat-body::-webkit-scrollbar { width: 4px; }
+        .ai-chat-body::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.35); border-radius: 4px; }
+
+        .msg-bubble {
+            max-width: 88%;
+            padding: 10px 13px;
+            border-radius: 12px;
+            font-size: 0.84rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .msg-bubble.bot {
+            align-self: flex-start;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            color: #f1f5f9;
+            border-bottom-left-radius: 2px;
+        }
+
+        .msg-bubble.user {
+            align-self: flex-end;
+            background: rgba(0, 255, 170, 0.16);
+            border: 1px solid rgba(0, 255, 170, 0.4);
+            color: #fff;
+            border-bottom-right-radius: 2px;
+        }
+
+        .quick-prompts {
+            padding: 8px 12px;
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .quick-chip {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            color: #7dd3fc;
+            padding: 6px 11px;
+            border-radius: 14px;
+            font-size: 0.74rem;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .quick-chip:hover { background: rgba(0, 240, 255, 0.2); color: #fff; }
+
+        .ai-input-area {
+            padding: 10px 12px;
+            background: rgba(3, 5, 10, 0.95);
+            border-top: 1px solid rgba(0, 240, 255, 0.25);
+            display: flex;
+            gap: 8px;
+        }
+
+        #aiUserInput {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 8px;
+            padding: 9px 12px;
+            color: #fff;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            outline: none;
+            user-select: text;
+        }
+        #aiUserInput:focus { border-color: #00f0ff; box-shadow: 0 0 10px rgba(0, 240, 255, 0.25); }
+
+        #aiSendBtn {
+            background: #00f0ff;
+            color: #020306;
+            border: none;
+            padding: 0 16px;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        #aiSendBtn:hover { box-shadow: 0 0 15px #00f0ff; transform: scale(1.03); }
+
+        /* =========================================
+           TELEFON / MOBİL TAM EKRAN & KOMPAKT DÜZEN (<= 950px)
+           ========================================= */
+        @media only screen and (max-width: 950px) {
+            html, body {
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            #intro-screen {
+                justify-content: flex-start;
+                padding: 14px 10px;
+                overflow-y: auto;
+            }
+
+            .hero-terminal {
+                width: 100%;
+                max-width: 100%;
+                padding: 18px 12px;
+                border-radius: 12px;
+                margin-top: 6px;
+            }
+
+            .terminal-top-tag {
+                font-size: 0.6rem;
+                letter-spacing: 0.5px;
+                padding: 4px 8px;
+                margin-bottom: 10px;
+            }
+
+            .welcome-title {
+                font-size: 1.2rem;
+                letter-spacing: 0.5px;
+                line-height: 1.3;
+                margin-bottom: 8px;
+            }
+
+            .typing-subtitle {
+                font-size: 0.72rem;
+                margin-bottom: 14px;
+            }
+
+            .coder-auth-box {
+                padding: 14px 12px;
+            }
+
+            .cyber-input-wrap input {
+                font-size: 16px;
+                padding: 9px 8px 9px 0;
+            }
+
+            #enter-btn {
+                width: 100%;
+                padding: 11px 10px;
+                font-size: 0.8rem;
+                letter-spacing: 1px;
+            }
+
+            .splash-terminal-box { padding: 16px 12px; }
+            .coder-present-title { font-size: 1.7rem; letter-spacing: 2px; }
+            .splash-code-tag { font-size: 0.68rem; letter-spacing: 0.5px; }
+
+            #main-app {
+                position: relative !important;
+                inset: auto !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: 100vh !important;
+                height: auto !important;
+                overflow-x: hidden !important;
+            }
+
+            .top-navbar {
+                position: sticky;
+                top: 0;
+                z-index: 40;
+                min-height: 44px;
+                padding: 6px 10px;
+                width: 100%;
+            }
+
+            .logo { font-size: 0.82rem; letter-spacing: 0.5px; }
+            .sys-info { display: none; }
+            .coder-user-tag { font-size: 0.62rem; padding: 4px 7px; }
+
+            #connectAssistantBtn {
+                font-size: 0.64rem;
+                padding: 6px 8px;
+                gap: 5px;
+            }
+
+            .workspace {
+                flex-direction: column;
+                align-items: stretch;
+                justify-content: flex-start;
+                padding: 6px 6px 20px 6px;
+                gap: 8px;
+                width: 100%;
+                max-width: 100%;
+                overflow: visible;
+                height: auto;
+            }
+
+            .academy-view {
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+                padding: 8px;
+                gap: 8px;
+                border-radius: 10px;
+            }
+
+            .academy-top { padding-bottom: 6px; gap: 6px; }
+
+            .lang-tabs {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 4px;
+                width: 100%;
+            }
+
+            .lang-btn {
+                padding: 6px 2px;
+                font-size: 0.58rem;
+                text-align: center;
+                letter-spacing: 0;
+            }
+
+            .rank-badge, .xp-badge { padding: 4px 9px; font-size: 0.64rem; }
+            .progress-row { gap: 6px; }
+            .jump-step-box input { width: 68px; font-size: 0.68rem; padding: 3px 6px; }
+
+            .academy-body {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                width: 100%;
+                overflow: visible;
+            }
+
+            .lesson-card { width: 100%; padding: 10px; overflow: visible; }
+            .step-header-row { margin-bottom: 5px; }
+            .step-indicator { font-size: 0.68rem; }
+            .status-tag { font-size: 0.6rem; padding: 2px 7px; }
+            .lesson-title { font-size: 0.9rem; margin-bottom: 5px; }
+            .lesson-desc { font-size: 0.76rem; line-height: 1.4; margin-bottom: 8px; }
+            .mission-box { padding: 7px 9px; margin-bottom: 7px; }
+            .mission-title { font-size: 0.68rem; }
+            .mission-text { font-size: 0.74rem; line-height: 1.38; }
+            .lesson-tip { padding: 6px 8px; font-size: 0.7rem; }
+            .step-nav { margin-top: 8px; gap: 6px; }
+            .step-btn { padding: 7px 5px; font-size: 0.68rem; }
+            .code-playground { width: 100%; min-height: 260px; }
+            .editor-bar { padding: 6px 8px; gap: 5px; }
+
+            .editor-actions {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4px;
+            }
+
+            .helper-btn { font-size: 0.68rem; padding: 5px 4px; text-align: center; }
+            .run-code-btn { grid-column: span 2; padding: 8px; font-size: 0.72rem; }
+            #codeEditorArea { min-height: 120px; font-size: 15px; padding: 8px; line-height: 1.4; }
+            .console-output { height: auto; min-height: 75px; max-height: 140px; padding: 7px 8px; font-size: 0.74rem; }
+
+            .assistant-sidebar {
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100% !important;
+                height: 100dvh !important;
+                max-width: 100% !important;
+                z-index: 999 !important;
+                border-radius: 0 !important;
+                border: none !important;
+            }
+
+            .assistant-header { padding: 10px 12px; }
+            .ai-chat-body { padding: 10px; }
+            #aiUserInput { font-size: 16px; padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- =========================================
+         GÜVENLİK ENGELİ (BAN) EKRANI
+         ========================================= -->
+    <div id="ban-screen">
+        <div class="ban-box">
+            <div class="ban-icon">⛔</div>
+            <h1 class="ban-title">ERİŞİM ENGELLENDİ</h1>
+            <p class="ban-desc">
+                Sistem güvenliği ihlali tespit edildi: Asistana veya editöre küfür/uygunsuz ifade kullanımı nedeniyle bu cihazın <b>AEGEAN CORE</b> platformuna girişi kalıcı olarak engellenmiştir.
+            </p>
+            <div class="ban-code">[ SECURITY_CODE: 403_PROFANITY_LOCK ]</div>
+        </div>
+
+        <div class="admin-unban-area">
+            <input type="password" id="adminUnbanPass" placeholder="Admin Kodu">
+            <button id="adminUnbanBtn">Kilidi Aç</button>
+        </div>
+    </div>
+
+    <!-- =========================================
+         1. BÖLÜM: SİBER KODER GİRİŞ EKRANI (AUTH)
+         ========================================= -->
+    <div id="intro-screen">
+        <canvas id="cyber-canvas"></canvas>
+
+        <div class="hero-terminal">
+            <div class="terminal-top-tag">[ SECURE_TERMINAL // AEGEAN_AUTH_v6.0 ]</div>
+            <h1 class="welcome-title">
+                Welcome to the <span>imagination of the Aegean</span>
+            </h1>
+            <div class="typing-subtitle">
+                <span id="typedSubtitle"></span><span class="typing-cursor">_</span>
+            </div>
+
+            <!-- KULLANICI ADI & ŞİFRE GİRİŞ KUTUSU -->
+            <form class="coder-auth-box" id="coderLoginForm" autocomplete="off">
+                <div class="auth-header-bar">
+                    <div class="auth-dots"><span></span><span></span><span></span></div>
+                    <span>ROOT@AEGEAN:~/LOGIN_GATE</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="coderUsername">&gt;_ CODER_ID (KULLANICI ADI)</label>
+                    <div class="cyber-input-wrap">
+                        <span class="input-prefix">@</span>
+                        <input type="text" id="coderUsername" placeholder="Kullanıcı adını gir..." maxlength="20" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="coderPassword">&gt;_ ACCESS_KEY (ŞİFRE)</label>
+                    <div class="cyber-input-wrap">
+                        <span class="input-prefix">#</span>
+                        <input type="password" id="coderPassword" placeholder="Şifreni oluştur veya gir..." maxlength="30" required>
+                        <button type="button" class="toggle-pass-btn" id="togglePassBtn" title="Şifreyi Göster/Gizle">👁️</button>
+                    </div>
+                </div>
+
+                <div class="auth-error-msg" id="authErrorMsg"></div>
+
+                <button type="submit" id="enter-btn">KİMLİĞİ DOĞRULA &amp; GİRİŞ YAP &gt;_</button>
+
+                <div class="auth-footer-tools">
+                    <span id="authStatusHint">İlk girişte hesabın otomatik oluşturulur</span>
+                    <button type="button" class="quick-fill-link" id="quickDemoBtn">⚡ Hızlı Koder Girişi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================
+         "EGE SUNAR" SİNEMATİK GLITCH GEÇİŞ EKRANI
+         ========================================= -->
+    <div id="ege-splash">
+        <div class="splash-terminal-box">
+            <div class="boot-logs" id="bootLogs"></div>
+            <div class="coder-present-title" data-text="EGE SUNAR">EGE SUNAR</div>
+            <div class="splash-code-tag">&lt;FULL_HTML_10000_STEPS // DEVELOPER_EDITION&gt;</div>
+            <div class="splash-loader">
+                <div class="splash-bar" id="splashBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================
+         2. BÖLÜM: KOD ÖĞRENME PLATFORMU + YAN ASİSTAN
+         ========================================= -->
+    <div id="main-app">
+        <canvas id="matrix-bg"></canvas>
+
+        <header class="top-navbar">
+            <div class="logo">AEGEAN<span>//</span>CODE</div>
+
+            <div class="nav-right">
+                <div class="coder-user-tag" id="activeCoderBadge">👤 @coder</div>
+                <div class="sys-info" id="clock">SYS: ONLINE</div>
+                <button id="connectAssistantBtn">
+                    <span class="pulse-dot"></span>
+                    <span>ASİSTANA BAĞLAN</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="workspace">
+            <!-- SOL / ANA KOD ÖĞRENME ALANI -->
+            <div class="academy-view">
+                <div class="academy-top">
+                    <div class="lang-tabs" id="langTabs">
+                        <button class="lang-btn active" data-lang="html">🌐 HTML (10000)</button>
+                        <button class="lang-btn" data-lang="python">🐍 Python (16)</button>
+                        <button class="lang-btn" data-lang="javascript">⚡ JS (16)</button>
+                        <button class="lang-btn" data-lang="cpp">⚙️ C++ (16)</button>
+                    </div>
+
+                    <div class="stats-group">
+                        <div class="rank-badge" id="rankBadge">🥉 Çaylak</div>
+                        <div class="xp-badge" id="xpBadge">⚡ XP: 0 (0/10048)</div>
+                    </div>
+                </div>
+
+                <div class="progress-row">
+                    <div class="step-progress-bar" id="stepProgressBar" title="Adım İlerlemesi"></div>
+                    <div class="jump-step-box">
+                        <input type="number" id="jumpStepInput" min="1" max="10000" placeholder="Adım #">
+                        <button id="jumpStepBtn">GİT</button>
+                    </div>
+                </div>
+
+                <div class="academy-body">
+                    <div class="lesson-card">
+                        <div>
+                            <div class="step-header-row">
+                                <span class="step-indicator" id="stepIndicator">ADIM 1 / 10000</span>
+                                <span class="status-tag" id="stepStatusTag">GÖREV BEKLENİYOR</span>
+                            </div>
+                            <h2 class="lesson-title" id="lessonTitle">Başlık</h2>
+                            <p class="lesson-desc" id="lessonDesc">Açıklama...</p>
+
+                            <div class="mission-box">
+                                <div class="mission-title">&gt;_ SENİN GÖREVİN:</div>
+                                <div class="mission-text" id="missionText">Görev açıklaması...</div>
+                            </div>
+
+                            <div class="lesson-tip" id="lessonTip">İpucu...</div>
+                        </div>
+
+                        <div class="step-nav">
+                            <button class="step-btn" id="prevStepBtn">← Önceki</button>
+                            <button class="step-btn" id="nextStepBtn">Sonraki Adım →</button>
+                        </div>
+                    </div>
+
+                    <div class="code-playground">
+                        <div class="editor-bar">
+                            <span id="editorFileName">index.html</span>
+                            <div class="editor-actions">
+                                <button class="helper-btn" id="resetCodeBtn" title="Kodu Sıfırla">↺ Sıfırla</button>
+                                <button class="helper-btn" id="solveCodeBtn" title="Örnek Çözümü Göster">💡 Çözümü Yaz</button>
+                                <button class="run-code-btn" id="runCodeBtn">▶ ÇALIŞTIR &amp; KONTROL ET</button>
+                            </div>
+                        </div>
+                        <textarea id="codeEditorArea" spellcheck="false"></textarea>
+                        <div class="console-output">
+                            <span class="console-label">&gt;_ TERMİNAL ÇIKTISI &amp; DOĞRULAMA:</span>
+                            <pre id="consoleResult">Görevi tamamla ve 'ÇALIŞTIR & KONTROL ET' butonuna bas...</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SAĞ TARAF: EGE'NİN AI ASİSTANI -->
+            <aside class="assistant-sidebar" id="assistantSidebar">
+                <div class="assistant-header">
+                    <div class="assistant-identity">
+                        <div class="ai-avatar">AI</div>
+                        <div>
+                            <div class="ai-name">EGE AI ASİSTAN</div>
+                            <div class="ai-status">● Çevrimiçi // Neural Link Aktif</div>
+                        </div>
+                    </div>
+                    <button class="close-ai-btn" id="closeAssistantBtn" title="Kapat">✕</button>
+                </div>
+
+                <div class="ai-chat-body" id="aiChatBody"></div>
+
+                <div class="quick-prompts">
+                    <button class="quick-chip" data-q="sa">👋 sa</button>
+                    <button class="quick-chip" data-q="nbr">💬 nbr</button>
+                    <button class="quick-chip" data-q="Bu adımdaki görevi nasıl yaparım?">💡 Bu göreve yardım et</button>
+                    <button class="quick-chip" data-q="Rütbeler nelerdir?">👑 Rütbeleri göster</button>
+                </div>
+
+                <div class="ai-input-area">
+                    <input type="text" id="aiUserInput" placeholder="Asistana bir şey sor (örn: sa, nbr)..." autocomplete="off">
+                    <button id="aiSendBtn">SOR</button>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <script>
+        /* =========================================================
+           0. GÜVENLİK & KÜFÜR ENGELLEME SİSTEMİ (ŞİFRE: 1234)
+           ========================================================= */
+        const banScreen = document.getElementById('ban-screen');
+        const adminUnbanPass = document.getElementById('adminUnbanPass');
+        const adminUnbanBtn = document.getElementById('adminUnbanBtn');
+
+        const profanityList = [
+            "amk", "aq", "amq", "mk", "oc", "oç", "oruspu", "orospu",
+            "piç", "pic", "sik", "siktir", "sikeyim", "yarrak", "yarak",
+            "göt", "got", "amcık", "amcik", "pezevenk", "kahpe", "ibne",
+            "puşt", "pust", "yavşak", "yavsak", "gerizekalı", "gerizekali",
+            "mal", "aptal", "salak", "fuck", "shit", "bitch"
+        ];
+
+        function containsProfanity(text) {
+            const cleaned = text.toLowerCase()
+                .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()@?]/g, " ")
+                .trim();
+            const words = cleaned.split(/\s+/);
+
+            return words.some(word => profanityList.includes(word)) ||
+                   /(siktir|orospu|oruspu|yarrak|amcık|amcik|pezevenk|yavşak|yavsak)/.test(cleaned);
+        }
+
+        function triggerSiteBan() {
+            localStorage.setItem('aegean_user_banned', 'true');
+            banScreen.classList.add('active');
+            document.getElementById('intro-screen').style.display = 'none';
+            document.getElementById('ege-splash').style.display = 'none';
+            document.getElementById('main-app').style.display = 'none';
+        }
+
+        if (localStorage.getItem('aegean_user_banned') === 'true') {
+            triggerSiteBan();
+        }
+
+        adminUnbanBtn.addEventListener('click', () => {
+            if (adminUnbanPass.value === '1234') {
+                localStorage.removeItem('aegean_user_banned');
+                location.reload();
+            } else {
+                adminUnbanPass.value = '';
+                adminUnbanPass.placeholder = 'Hatalı Şifre!';
+            }
+        });
+
+        /* =========================================================
+           1. BÖLÜM SCRIPT: KODER GİRİŞ & AUTH EKRANI
+           ========================================= */
+        const introScreen = document.getElementById('intro-screen');
+        const cyberCanvas = document.getElementById('cyber-canvas');
+        const cCtx = cyberCanvas.getContext('2d');
+        const typedSubtitle = document.getElementById('typedSubtitle');
+
+        const coderLoginForm = document.getElementById('coderLoginForm');
+        const coderUsernameInput = document.getElementById('coderUsername');
+        const coderPasswordInput = document.getElementById('coderPassword');
+        const togglePassBtn = document.getElementById('togglePassBtn');
+        const authErrorMsg = document.getElementById('authErrorMsg');
+        const authStatusHint = document.getElementById('authStatusHint');
+        const quickDemoBtn = document.getElementById('quickDemoBtn');
+        const activeCoderBadge = document.getElementById('activeCoderBadge');
+
+        let cWidth = cyberCanvas.width = document.documentElement.clientWidth;
+        let cHeight = cyberCanvas.height = document.documentElement.clientHeight;
+        let introActive = true;
+        let loggedInCoderName = "coder";
+
+        // Kayıtlı kullanıcı varsa hatırlat
+        try {
+            const savedCreds = JSON.parse(localStorage.getItem('aegean_coder_auth'));
+            if (savedCreds && savedCreds.username) {
+                coderUsernameInput.value = savedCreds.username;
+                authStatusHint.textContent = `Kayıtlı koder: @${savedCreds.username}`;
+            }
+        } catch (e) {}
+
+        togglePassBtn.addEventListener('click', () => {
+            const isPass = coderPasswordInput.type === 'password';
+            coderPasswordInput.type = isPass ? 'text' : 'password';
+            togglePassBtn.textContent = isPass ? '🙈' : '👁️';
+        });
+
+        quickDemoBtn.addEventListener('click', () => {
+            coderUsernameInput.value = 'ege_dev';
+            coderPasswordInput.value = '1337';
+            authErrorMsg.textContent = '';
+        });
+
+        const subText = "Authentication Required // Enter Coder Credentials to Unlock System...";
+        let charIdx = 0;
+        function typeSubtitle() {
+            if (charIdx < subText.length) {
+                typedSubtitle.textContent += subText.charAt(charIdx);
+                charIdx++;
+                setTimeout(typeSubtitle, 28);
+            }
+        }
+        setTimeout(typeSubtitle, 350);
+
+        const nodes = [];
+        const nodeCount = window.innerWidth < 768 ? 30 : 75;
+        const codeSnippets = ["01", "{}", "=>", "<html>", "&&", "0x1A", "<div>", "[]"];
+
+        for (let i = 0; i < nodeCount; i++) {
+            nodes.push({
+                x: Math.random() * cWidth,
+                y: Math.random() * cHeight,
+                vx: (Math.random() - 0.5) * 0.9,
+                vy: (Math.random() - 0.5) * 0.9,
+                label: Math.random() > 0.7 ? codeSnippets[Math.floor(Math.random() * codeSnippets.length)] : null
+            });
+        }
+
+        let mouse = { x: -1000, y: -1000 };
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        function animateCyberGrid() {
+            if (!introActive) return;
+
+            cCtx.clearRect(0, 0, cWidth, cHeight);
+            cCtx.font = "11px 'Fira Code', monospace";
+
+            for (let i = 0; i < nodes.length; i++) {
+                const n = nodes[i];
+                n.x += n.vx;
+                n.y += n.vy;
+
+                if (n.x < 0 || n.x > cWidth) n.vx *= -1;
+                if (n.y < 0 || n.y > cHeight) n.vy *= -1;
+
+                cCtx.fillStyle = "rgba(0, 255, 170, 0.75)";
+                cCtx.beginPath();
+                cCtx.arc(n.x, n.y, 2, 0, Math.PI * 2);
+                cCtx.fill();
+
+                if (n.label) {
+                    cCtx.fillStyle = "rgba(56, 189, 248, 0.45)";
+                    cCtx.fillText(n.label, n.x + 6, n.y + 4);
+                }
+
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const n2 = nodes[j];
+                    const dist = Math.hypot(n.x - n2.x, n.y - n2.y);
+                    if (dist < 140) {
+                        cCtx.strokeStyle = `rgba(0, 255, 170, ${(1 - dist / 140) * 0.25})`;
+                        cCtx.lineWidth = 1;
+                        cCtx.beginPath();
+                        cCtx.moveTo(n.x, n.y);
+                        cCtx.lineTo(n2.x, n2.y);
+                        cCtx.stroke();
+                    }
+                }
+
+                const mouseDist = Math.hypot(n.x - mouse.x, n.y - mouse.y);
+                if (mouseDist < 170) {
+                    cCtx.strokeStyle = `rgba(56, 189, 248, ${(1 - mouseDist / 170) * 0.5})`;
+                    cCtx.beginPath();
+                    cCtx.moveTo(n.x, n.y);
+                    cCtx.lineTo(mouse.x, mouse.y);
+                    cCtx.stroke();
+                }
+            }
+
+            requestAnimationFrame(animateCyberGrid);
+        }
+
+        animateCyberGrid();
+
+        /* =========================================================
+           GEÇİŞ: GİRİŞ DOĞRULAMA -> "EGE SUNAR" -> 2. EKRAN
+           ========================================================= */
+        const egeSplash = document.getElementById('ege-splash');
+        const bootLogs = document.getElementById('bootLogs');
+        const splashBar = document.getElementById('splashBar');
+        const mainApp = document.getElementById('main-app');
+        let transitionStarted = false;
+
+        coderLoginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (localStorage.getItem('aegean_user_banned') === 'true') return;
+            if (transitionStarted) return;
+
+            const uname = coderUsernameInput.value.trim();
+            const pass = coderPasswordInput.value.trim();
+
+            if (containsProfanity(uname)) {
+                triggerSiteBan();
+                return;
+            }
+
+            if (uname.length < 2) {
+                authErrorMsg.textContent = '[HATA]: Kullanıcı adı en az 2 karakter olmalı!';
+                return;
+            }
+
+            if (pass.length < 3) {
+                authErrorMsg.textContent = '[HATA]: Şifre en az 3 karakter olmalı!';
+                return;
+            }
+
+            // Şifre kontrolü / yeni kayıt
+            try {
+                const existing = JSON.parse(localStorage.getItem('aegean_coder_auth'));
+                if (existing && existing.username.toLowerCase() === uname.toLowerCase() && existing.password !== pass) {
+                    authErrorMsg.textContent = '[ERİŞİM REDDEDİLDİ]: Bu kullanıcı adı için şifre hatalı!';
+                    return;
+                }
+                localStorage.setItem('aegean_coder_auth', JSON.stringify({ username: uname, password: pass }));
+            } catch (err) {}
+
+            authErrorMsg.style.color = '#00ffaa';
+            authErrorMsg.textContent = '✔ Kimlik doğrulandı! Sistem başlatılıyor...';
+            loggedInCoderName = uname;
+            activeCoderBadge.textContent = `👤 @${uname}`;
+
+            startSystemSequence(uname);
+        });
+
+        function startSystemSequence(username) {
+            transitionStarted = true;
+
+            introScreen.classList.add('fade-out');
+            splashBar.style.width = '0%';
+            bootLogs.innerHTML = '';
+            egeSplash.classList.add('show');
+
+            const logLines = [
+                `&gt; Authenticating Coder [@${username}] ... ACCESS GRANTED`,
+                '&gt; Initializing AEGEAN_KERNEL_v6.0 (10,000-Step HTML Engine)...',
+                '&gt; Loading Rank Ladder up to 👑DEVELOPER👑 ... READY',
+                '&gt; Launching interactive code studio...'
+            ];
+
+            logLines.forEach((line, idx) => {
+                setTimeout(() => {
+                    bootLogs.innerHTML += line + '<br>';
+                }, idx * 420);
+            });
+
+            setTimeout(() => {
+                splashBar.style.width = '100%';
+            }, 100);
+
+            setTimeout(() => {
+                introActive = false;
+                introScreen.style.display = 'none';
+                egeSplash.classList.remove('show');
+                mainApp.classList.add('active');
+                window.scrollTo(0, 0);
+                startMainMatrix();
+                updateStatsUI();
+                loadLesson();
+            }, 2600);
+        }
+
+        /* =========================================================
+           2. BÖLÜM SCRIPT: YUKARIDAN SONSUZ AKAN KOD YAĞMURU
+           ========================================================= */
+        const matrixCanvas = document.getElementById('matrix-bg');
+        const mCtx = matrixCanvas.getContext('2d');
+        let mWidth, mHeight, mColumns, mDrops;
+        const mChars = "01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン<>{}[]();=+-*/&%$#@!";
+        const mFontSize = 15;
+
+        function startMainMatrix() {
+            mWidth = matrixCanvas.width = document.documentElement.clientWidth;
+            mHeight = matrixCanvas.height = document.documentElement.clientHeight;
+            mColumns = Math.floor(mWidth / mFontSize);
+            mDrops = Array.from({ length: mColumns }, () => Math.random() * -100);
+            animateMatrix();
+        }
+
+        function animateMatrix() {
+            mCtx.fillStyle = 'rgba(2, 3, 6, 0.08)';
+            mCtx.fillRect(0, 0, mWidth, mHeight);
+
+            mCtx.font = mFontSize + "px 'Fira Code', monospace";
+
+            for (let i = 0; i < mDrops.length; i++) {
+                const char = mChars[Math.floor(Math.random() * mChars.length)];
+                mCtx.fillStyle = Math.random() > 0.94 ? '#ffffff' : '#00ffaa';
+                mCtx.fillText(char, i * mFontSize, mDrops[i] * mFontSize);
+
+                if (mDrops[i] * mFontSize > mHeight && Math.random() > 0.975) {
+                    mDrops[i] = 0;
+                }
+                mDrops[i]++;
+            }
+            requestAnimationFrame(animateMatrix);
+        }
+
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').textContent = `SYS: ${now.toLocaleTimeString('tr-TR')}`;
+        }, 1000);
+
+        /* =========================================================
+           3. BÖLÜM SCRIPT: 10.000 ADIMLIK HTML TAM ÖĞRENME MOTORU
+           ========================================================= */
+        const htmlBlueprints = [
+            {
+                cat: "Temel HTML5 Yapısı",
+                name: "Ana Başlık (<h1>)",
+                desc: "HTML sayfalarında en önemli başlık için <h1> etiketi kullanılır. Arama motorları sayfanın konusunu bu etiketten anlar.",
+                mission: (n) => `<h1>AEGEAN CORE #${n}</h1> etiketini yazarak sayfa başlığı oluştur.`,
+                tip: "Açılış etiketi <h1> ile başlar, kapanış etiketi </h1> ile biter.",
+                starter: (n) => `<!-- Adim ${n}: h1 basligini tamamla -->\n<h1></h1>`,
+                solution: (n) => `<h1>AEGEAN CORE #${n}</h1>`,
+                regex: /<h1>.+<\/h1>/i
+            },
+            {
+                cat: "Temel HTML5 Yapısı",
+                name: "Paragraf Metni (<p>)",
+                desc: "Web sayfalarındaki normal açıklama yazıları ve makaleler <p> (paragraph) etiketi içine yazılır.",
+                mission: (n) => `<p>HTML Ders Modulu ${n}</p> etiketini oluştur.`,
+                tip: "Paragraf etiketleri otomatik olarak alt satıra geçer.",
+                starter: (n) => `<!-- Adim ${n}: p etiketi ekle -->\n<p></p>`,
+                solution: (n) => `<p>HTML Ders Modulu ${n}</p>`,
+                regex: /<p>.+<\/p>/i
+            },
+            {
+                cat: "Metin Biçimlendirme",
+                name: "Kalın ve Önemli Vurgu (<strong>)",
+                desc: "Bir cümle içindeki kritik kelimeleri kalın ve vurgulu göstermek için <strong> etiketi kullanılır.",
+                mission: (n) => `<p>Seviye <strong>${n}</strong> Aktif</p> kodunu yaz.`,
+                tip: "<strong> etiketi hem kalın yapar hem de ekran okuyuculara vurguyu bildirir.",
+                starter: (n) => `<p>Seviye  Aktif</p>`,
+                solution: (n) => `<p>Seviye <strong>${n}</strong> Aktif</p>`,
+                regex: /<strong>.+<\/strong>/i
+            },
+            {
+                cat: "Bağlantılar (Hyperlinks)",
+                name: "Sayfa Linki (<a>)",
+                desc: "İnternet sayfalarını birbirine bağlayan <a> etiketinde gidilecek adres href niteliğine yazılır.",
+                mission: (n) => `<a href="https://aegean.dev/step/${n}">Adim ${n} Baglantisi</a> yaz.`,
+                tip: "href=\"...\" tırnakları arasına mutlaka geçerli bir adres yazmalısın.",
+                starter: (n) => `<a href="">Adim ${n} Baglantisi</a>`,
+                solution: (n) => `<a href="https://aegean.dev/step/${n}">Adim ${n} Baglantisi</a>`,
+                regex: /<a\s+href\s*=\s*["']https?:\/\/.+["']>.*<\/a>/i
+            },
+            {
+                cat: "Medya ve Görseller",
+                name: "Görsel Yerleştirme (<img>)",
+                desc: "Sayfaya resim eklemek için <img> etiketi kullanılır. src resim yolunu, alt ise resim açıklamasını tutar.",
+                mission: (n) => `<img src="banner_${n}.png" alt="Gorsel ${n}"> etiketini yaz.`,
+                tip: "<img> kendi kendine kapanan (void) bir etikettir, </img> yazılmaz.",
+                starter: (n) => `<img src="" alt="Gorsel ${n}">`,
+                solution: (n) => `<img src="banner_${n}.png" alt="Gorsel ${n}">`,
+                regex: /<img\s+[^>]*src\s*=\s*["'].+["'][^>]*alt\s*=\s*["'].+["']/i
+            },
+            {
+                cat: "Listeler",
+                name: "Sırasız Liste (<ul> & <li>)",
+                desc: "Menüler ve madde işaretli listeler için <ul> kapsayıcısı içine <li> elemanları eklenir.",
+                mission: (n) => `<ul><li>Modul ${n}</li><li>HTML5</li></ul> yapısını kur.`,
+                tip: "Her liste maddesi mutlaka <li>...</li> içinde olmalıdır.",
+                starter: (n) => `<ul>\n    <!-- Iki madde ekle -->\n</ul>`,
+                solution: (n) => `<ul>\n    <li>Modul ${n}</li>\n    <li>HTML5</li>\n</ul>`,
+                regex: /<ul>[\s\S]*<li>.+<\/li>[\s\S]*<\/ul>/i
+            },
+            {
+                cat: "Listeler",
+                name: "Numaralı Sıralı Liste (<ol> & <li>)",
+                desc: "Adım adım sıralama gereken listelerde <ol> (ordered list) kullanılır ve tarayıcı otomatik numara verir.",
+                mission: (n) => `<ol><li>Kodla</li><li>Test Et #${n}</li></ol> yaz.`,
+                tip: "<ol> etiketi 1, 2, 3 şeklinde otomatik numaralandırma sağlar.",
+                starter: (n) => `<ol>\n    <li>Kodla</li>\n</ol>`,
+                solution: (n) => `<ol>\n    <li>Kodla</li>\n    <li>Test Et #${n}</li>\n</ol>`,
+                regex: /<ol>[\s\S]*<li>.+<\/li>[\s\S]*<\/ol>/i
+            },
+            {
+                cat: "Formlar ve Kullanıcı Girişi",
+                name: "Metin Giriş Alanı (<input>)",
+                desc: "Kullanıcıdan veri almak için <input> etiketi ve type=\"text\" özelliği kullanılır.",
+                mission: (n) => `<input type="text" placeholder="Kullanici ${n}"> yaz.`,
+                tip: "placeholder kutu boşken içinde görünen ipucu metnidir.",
+                starter: (n) => `<input type="" placeholder="Kullanici ${n}">`,
+                solution: (n) => `<input type="text" placeholder="Kullanici ${n}">`,
+                regex: /<input\s+[^>]*type\s*=\s*["']text["']/i
+            },
+            {
+                cat: "Formlar ve Kullanıcı Girişi",
+                name: "Etkileşimli Buton (<button>)",
+                desc: "Form göndermek veya JavaScript tetiklemek için <button> etiketi kullanılır.",
+                mission: (n) => `<button type="button">Gonder #${n}</button> oluştur.`,
+                tip: "type=\"button\" sayfanın istemeden yenilenmesini önler.",
+                starter: (n) => `<button>Gonder #${n}</button>`,
+                solution: (n) => `<button type="button">Gonder #${n}</button>`,
+                regex: /<button[^>]*>.+<\/button>/i
+            },
+            {
+                cat: "Semantik HTML5 Mimarisi",
+                name: "Sayfa Üst Bilgisi (<header> & <nav>)",
+                desc: "Modern HTML5'te menü ve üst kısım için <div> yerine anlamlı <header> ve <nav> etiketleri kullanılır.",
+                mission: (n) => `<header><nav>Menu ${n}</nav></header> yapısını oluştur.`,
+                tip: "Semantik etiketler SEO puanını ve kod okunabilirliğini artırır.",
+                starter: (n) => `<header>\n    <!-- nav ekle -->\n</header>`,
+                solution: (n) => `<header><nav>Menu ${n}</nav></header>`,
+                regex: /<header>[\s\S]*<nav>.+<\/nav>[\s\S]*<\/header>/i
+            },
+            {
+                cat: "Semantik HTML5 Mimarisi",
+                name: "İçerik Bölümü (<section> & <article>)",
+                desc: "Web sayfasındaki bağımsız makale ve kart grupları <section> ve <article> ile bölünür.",
+                mission: (n) => `<section><article>Makale ${n}</article></section> yaz.`,
+                tip: "<section> ana bölümleri, <article> ise tekil içerik bloklarını sarar.",
+                starter: (n) => `<section>\n    <!-- article ekle -->\n</section>`,
+                solution: (n) => `<section><article>Makale ${n}</article></section>`,
+                regex: /<section>[\s\S]*<article>.+<\/article>[\s\S]*<\/section>/i
+            },
+            {
+                cat: "Tablolar",
+                name: "Veri Tablosu (<table>, <tr>, <td>)",
+                desc: "Satır ve sütunlardan oluşan veriler için <table> içinde satır <tr> ve hücre <td> kullanılır.",
+                mission: (n) => `<table><tr><td>Adim</td><td>${n}</td></tr></table> oluştur.`,
+                tip: "tr = table row (satır), td = table data (hücre) demektir.",
+                starter: (n) => `<table><tr><td>Adim</td></tr></table>`,
+                solution: (n) => `<table><tr><td>Adim</td><td>${n}</td></tr></table>`,
+                regex: /<table>[\s\S]*<tr>[\s\S]*<td>.+<\/td>[\s\S]*<\/tr>[\s\S]*<\/table>/i
+            },
+            {
+                cat: "CSS Kutu Modeli (Box Model)",
+                name: "İç ve Dış Boşluk (padding & margin)",
+                desc: "Bir <div> kutusunun iç boşluğu padding, dış çevresiyle olan mesafesi margin ile ayarlanır.",
+                mission: (n) => `<div style="padding: 16px; margin: 10px;">Kutu ${n}</div> yaz.`,
+                tip: "CSS özellikleri style=\"...\" içinde noktalı virgül (;) ile ayrılır.",
+                starter: (n) => `<div style="padding: 16px;">Kutu ${n}</div>`,
+                solution: (n) => `<div style="padding: 16px; margin: 10px;">Kutu ${n}</div>`,
+                regex: /padding\s*:\s*\d+px[\s\S]*margin\s*:\s*\d+px/i
+            },
+            {
+                cat: "Modern CSS Flexbox & Grid",
+                name: "Flexbox Hizalama (display: flex)",
+                desc: "Elemanları yan yana dizmek ve ortalamak için display: flex; ve justify-content: center; kullanılır.",
+                mission: (n) => `<div style="display: flex; justify-content: center;">Flex ${n}</div> yaz.`,
+                tip: "Flexbox tüm modern web arayüzlerinin temel hizalama motorudur.",
+                starter: (n) => `<div style="display: flex;">Flex ${n}</div>`,
+                solution: (n) => `<div style="display: flex; justify-content: center;">Flex ${n}</div>`,
+                regex: /display\s*:\s*flex[\s\S]*justify-content\s*:\s*center/i
+            },
+            {
+                cat: "Modern CSS Flexbox & Grid",
+                name: "CSS Grid Izgara Sistemi (display: grid)",
+                desc: "Çok sütunlu profesyonel düzenler için display: grid; ve grid-template-columns kullanılır.",
+                mission: (n) => `<div style="display: grid; grid-template-columns: 1fr 1fr;">Grid ${n}</div> yaz.`,
+                tip: "1fr 1fr ekranı iki eşit sütuna böler.",
+                starter: (n) => `<div style="display: grid;">Grid ${n}</div>`,
+                solution: (n) => `<div style="display: grid; grid-template-columns: 1fr 1fr;">Grid ${n}</div>`,
+                regex: /display\s*:\s*grid[\s\S]*grid-template-columns/i
+            },
+            {
+                cat: "İleri Seviye HTML5 & UI Mimarisi",
+                name: "Etkileşimli Açılır Panel (<details> & <summary>)",
+                desc: "JavaScript yazmadan tıklanabilir akordeon menüler yapmak için <details> ve <summary> kullanılır.",
+                mission: (n) => `<details><summary>Detay ${n}</summary><p>Gizli Icerik</p></details> yaz.`,
+                tip: "<summary> tıklanabilir başlığı, içindeki diğer etiketler açılan içeriği oluşturur.",
+                starter: (n) => `<details><summary>Detay ${n}</summary></details>`,
+                solution: (n) => `<details><summary>Detay ${n}</summary><p>Gizli Icerik</p></details>`,
+                regex: /<details>[\s\S]*<summary>.+<\/summary>[\s\S]*<\/details>/i
+            }
+        ];
+
+        function getHtmlStep(index) {
+            const stepNum = index + 1;
+            const bp = htmlBlueprints[index % htmlBlueprints.length];
+            const tier = Math.floor(index / htmlBlueprints.length) + 1;
+
+            let levelTag = "Temel Seviye";
+            if (stepNum > 7500) levelTag = "Master Developer Seviyesi";
+            else if (stepNum > 4000) levelTag = "İleri Seviye DOM & UI";
+            else if (stepNum > 1500) levelTag = "Orta Seviye Layout";
+            else if (stepNum > 250) levelTag = "Gelişmiş CSS & Yapı";
+
+            const isFinal = stepNum === 10000;
+
+            return {
+                title: isFinal
+                    ? `10000. Adım: FİNAL PROJESİ — 👑DEVELOPER👑 Sertifikası`
+                    : `${stepNum}. Adım: ${bp.name} [Tur ${tier}]`,
+                desc: `[${levelTag} • ${bp.cat}] ${bp.desc}`,
+                mission: isFinal
+                    ? `Son adımı tamamlamak için <div class="developer-master" style="display: flex; padding: 20px;"><h1>EGE DEVELOPER</h1></div> kodunu yaz ve çalıştır!`
+                    : bp.mission(stepNum),
+                tip: isFinal
+                    ? `Bu adımı tamamladığında 10.000 adımlık HTML eğitimini bitirip 👑DEVELOPER👑 unvanına ulaşırsın!`
+                    : `İpucu: ${bp.tip}`,
+                starterCode: isFinal
+                    ? `<!-- 10000. ADIM FINAL GOREVI -->\n<div class="developer-master" style=""><h1></h1></div>`
+                    : bp.starter(stepNum),
+                solutionCode: isFinal
+                    ? `<div class="developer-master" style="display: flex; padding: 20px;"><h1>EGE DEVELOPER</h1></div>`
+                    : bp.solution(stepNum),
+                validate: isFinal
+                    ? (code) => /class\s*=\s*["']developer-master["']/i.test(code) && /<h1>.+<\/h1>/i.test(code)
+                    : (code) => bp.regex.test(code),
+                successMsg: isFinal
+                    ? `EFSANE BAŞARI! 10.000/10.000 HTML adımını tamamlayarak 👑DEVELOPER👑 rütbesine yükseldin! [+500 XP]`
+                    : `Harika! Adım ${stepNum}/10000 başarıyla doğrulandı! [+50 XP]`
+            };
+        }
+
+        const lessonsData = {
+            html: {
+                file: 'index.html',
+                total: 10000,
+                isDynamic: true
+            },
+            python: {
+                file: 'junior_python.py',
+                steps: [
+                    {
+                        title: '1. Adım: Ekrana Çıktı Verme (print)',
+                        desc: 'Python’da bilgisayara ekranda yazı yazdırmak için print() komutu kullanılır. Metinler çift tırnak (" ") içine yazılır.',
+                        mission: 'Alt satıra print("Ege") yazarak ekrana ismini yazdır.',
+                        tip: 'İpucu: print("Ege") yazıp ÇALIŞTIR butonuna bas.',
+                        starterCode: 'print("Sistem Baslatildi")\n# Alt satira kendi print komutunu yaz:\n',
+                        solutionCode: 'print("Sistem Baslatildi")\nprint("Ege")',
+                        validate: (code) => /print\s*\(\s*["'].*ege.*["']\s*\)/i.test(code),
+                        successMsg: 'Harika! İlk Python çıktını ürettin. [+50 XP]'
+                    },
+                    {
+                        title: '2. Adım: Metin Değişkenleri (String)',
+                        desc: 'Değişkenler verileri saklayan kutulardır. Metin verilerine yazılım dilinde "String" (str) denir.',
+                        mission: 'dil adında bir değişken oluştur, içine "Python" yaz ve print(dil) ile yazdır.',
+                        tip: 'İpucu: dil = "Python" yazıp ardından print(dil) kullan.',
+                        starterCode: '# dil degiskenini olustur:\n',
+                        solutionCode: 'dil = "Python"\nprint(dil)',
+                        validate: (code) => /dil\s*=\s*["']python["']/i.test(code) && /print\s*\(\s*dil\s*\)/.test(code),
+                        successMsg: 'Süper! String değişken tanımlamayı öğrendin. [+50 XP]'
+                    },
+                    {
+                        title: '3. Adım: Tam Sayılar (Integer)',
+                        desc: 'Matematiksel işlemler için sayılar tırnaksız yazılır. Tam sayılara "Integer" (int) veri tipi denir.',
+                        mission: 'yas = 14 tanımla ve print(yas) ile ekrana yazdır.',
+                        tip: 'İpucu: Sayıların etrafına tırnak koyma!',
+                        starterCode: '# yas degiskenini tanimla:\n',
+                        solutionCode: 'yas = 14\nprint(yas)',
+                        validate: (code) => /yas\s*=\s*\d+/.test(code) && /print\s*\(\s*yas\s*\)/.test(code),
+                        successMsg: 'Mükemmel! Integer veri tipini kavradın. [+50 XP]'
+                    },
+                    {
+                        title: '4. Adım: Ondalıklı Sayılar (Float)',
+                        desc: 'Küsüratlı sayılar programlamada nokta (.) ile yazılır ve "Float" olarak adlandırılır.',
+                        mission: 'surum = 3.5 tanımla ve print(surum) ile ekrana yazdır.',
+                        tip: 'İpucu: Virgül değil nokta kullanmalısın: surum = 3.5',
+                        starterCode: '# surum adinda ondalikli sayi tanimla:\n',
+                        solutionCode: 'surum = 3.5\nprint(surum)',
+                        validate: (code) => /surum\s*=\s*\d+\.\d+/.test(code) && /print\s*\(\s*surum\s*\)/.test(code),
+                        successMsg: 'Harika! Float veri tipini başarıyla kullandın. [+50 XP]'
+                    },
+                    {
+                        title: '5. Adım: Mantıksal Değerler (Boolean)',
+                        desc: 'Yazılımda bir şeyin doğru veya yanlış olduğunu tutan tipe "Boolean" denir. Sadece True veya False alır.',
+                        mission: 'aktif = True tanımla ve print(aktif) ile yazdır.',
+                        tip: 'İpucu: Python’da True kelimesinin ilk harfi büyük yazılır.',
+                        starterCode: '# aktif degiskenini True yap:\n',
+                        solutionCode: 'aktif = True\nprint(aktif)',
+                        validate: (code) => /aktif\s*=\s*True/.test(code) && /print\s*\(\s*aktif\s*\)/.test(code),
+                        successMsg: 'Süper! Boolean mantığını öğrendin. [+50 XP]'
+                    },
+                    {
+                        title: '6. Adım: Matematiksel Operatörler',
+                        desc: 'Python güçlü bir hesap makinesidir: Toplama (+), Çıkarma (-), Çarpma (*), Bölme (/).',
+                        mission: 'sonuc = 25 * 4 işlemini hesaplat ve print(sonuc) ile ekrana yazdır.',
+                        tip: 'İpucu: Çarpma işlemi için * sembolü kullanılır.',
+                        starterCode: '# 25 ile 4 sayisini carpip sonuc degiskenine ata:\n',
+                        solutionCode: 'sonuc = 25 * 4\nprint(sonuc)',
+                        validate: (code) => /sonuc\s*=\s*25\s*\*\s*4/.test(code) && /print\s*\(\s*sonuc\s*\)/.test(code),
+                        successMsg: 'Mükemmel! Aritmetik operatörleri çalıştırdın. [+50 XP]'
+                    },
+                    {
+                        title: '7. Adım: Kalan Bulma (Modülüs %)',
+                        desc: 'Bir sayının başka bir sayıya bölümünden kalanı bulmak için % operatörü kullanılır.',
+                        mission: 'kalan = 10 % 3 yazarak 10 sayısının 3 ile bölümünden kalanı bul ve print(kalan) ile yazdır.',
+                        tip: 'İpucu: 10 % 3 işleminin sonucu 1 çıkacaktır.',
+                        starterCode: '# 10 mod 3 islemini yaz:\n',
+                        solutionCode: 'kalan = 10 % 3\nprint(kalan)',
+                        validate: (code) => /kalan\s*=\s*10\s*%\s*3/.test(code) && /print\s*\(\s*kalan\s*\)/.test(code),
+                        successMsg: 'Harika! Modülüs operatörü algoritmaların temelidir. [+50 XP]'
+                    },
+                    {
+                        title: '8. Adım: Metin Birleştirme (Concatenation)',
+                        desc: 'İki farklı metni + işareti ile uç uca birleştirebilirsin.',
+                        mission: 'ad = "Ege" ve selam = "Merhaba " + ad yazarak print(selam) ile ekrana yazdır.',
+                        tip: 'İpucu: "Merhaba " kelimesinin sonunda bir boşluk bırak.',
+                        starterCode: 'ad = "Ege"\n# selam degiskenini + ile birlestir:\n',
+                        solutionCode: 'ad = "Ege"\nselam = "Merhaba " + ad\nprint(selam)',
+                        validate: (code) => /selam\s*=.*\+.*ad/.test(code) && /print\s*\(\s*selam\s*\)/.test(code),
+                        successMsg: 'Süper! String birleştirme işlemini tamamladın. [+50 XP]'
+                    },
+                    {
+                        title: '9. Adım: Karşılaştırma Operatörleri',
+                        desc: 'İki değeri karşılaştırmak için ==, !=, >, < kullanılır.',
+                        mission: 'puan = 90 tanımla ve print(puan > 50) yaz.',
+                        tip: 'İpucu: Eşitlik kontrolünde çift == kullanılır.',
+                        starterCode: 'puan = 90\n# puan > 50 karsilastirmasini yazdir:\n',
+                        solutionCode: 'puan = 90\nprint(puan > 50)',
+                        validate: (code) => /print\s*\(\s*puan\s*>\s*50\s*\)/.test(code),
+                        successMsg: 'Mükemmel! Karşılaştırma mantığını kavradın. [+50 XP]'
+                    },
+                    {
+                        title: '10. Adım: Karar Yapısı (if Bloğu)',
+                        desc: 'Programın şart sağlandığında kod çalıştırması için if kullanılır.',
+                        mission: 'hiz = 120 tanımla. Eğer hiz > 100 ise ekrana "Hiz Limiti Asildi" yazdır.',
+                        tip: 'İpucu: if hiz > 100: alt satırında 4 boşluk bırakıp print() yaz.',
+                        starterCode: 'hiz = 120\n# if blogunu yaz:\n',
+                        solutionCode: 'hiz = 120\nif hiz > 100:\n    print("Hiz Limiti Asildi")',
+                        validate: (code) => /if\s+hiz\s*>\s*100\s*:/.test(code) && /print\s*\(/.test(code),
+                        successMsg: 'Harika! Koşullu dallanma yapısını kurdun. [+50 XP]'
+                    },
+                    {
+                        title: '11. Adım: if - else Yapısı',
+                        desc: 'Şart sağlanmazsa alternatif bir kod çalıştırmak için else: bloğu eklenir.',
+                        mission: 'sifre = "1234" olsun. if sifre == "1234": "Giris Basarili", else: "Hatali" yazdır.',
+                        tip: 'İpucu: else: bloğu if ile aynı hizada olmalıdır.',
+                        starterCode: 'sifre = "1234"\nif sifre == "1234":\n    print("Giris Basarili")\n# else blogunu ekle:\n',
+                        solutionCode: 'sifre = "1234"\nif sifre == "1234":\n    print("Giris Basarili")\nelse:\n    print("Hatali")',
+                        validate: (code) => /if\s+sifre\s*==/.test(code) && /else\s*:/.test(code),
+                        successMsg: 'Süper! Tam bir giriş kontrol algoritması yazdın. [+50 XP]'
+                    },
+                    {
+                        title: '12. Adım: for Döngüsü ile Tekrar',
+                        desc: 'Belirli sayıda tekrar eden işlemler için for döngüsü ve range() kullanılır.',
+                        mission: 'for i in range(4): döngüsü kur ve içine print(i) yaz.',
+                        tip: 'İpucu: range(4) sayıları 0, 1, 2, 3 olarak üretir.',
+                        starterCode: '# 4 kez donen for dongusu yaz:\n',
+                        solutionCode: 'for i in range(4):\n    print(i)',
+                        validate: (code) => /for\s+i\s+in\s+range\s*\(\s*4\s*\)\s*:/.test(code) && /print\s*\(\s*i\s*\)/.test(code),
+                        successMsg: 'Mükemmel! Döngü mekaniğini başarıyla çalıştırdın. [+50 XP]'
+                    },
+                    {
+                        title: '13. Adım: while Döngüsü',
+                        desc: 'Bir şart doğru olduğu sürece dönmeye devam eden döngüye while denir.',
+                        mission: 'sayac = 1 iken while sayac <= 3: döngüsü içinde print(sayac) ve sayac = sayac + 1 yaz.',
+                        tip: 'İpucu: sayac değerini artırmazsan döngü sonsuza kadar döner!',
+                        starterCode: 'sayac = 1\nwhile sayac <= 3:\n    print(sayac)\n    # sayac degerini 1 artir:\n',
+                        solutionCode: 'sayac = 1\nwhile sayac <= 3:\n    print(sayac)\n    sayac = sayac + 1',
+                        validate: (code) => /while\s+sayac\s*<=\s*3\s*:/.test(code) && /sayac\s*(\+=|=)/.test(code),
+                        successMsg: 'Harika! While döngüsünü kontrol altına aldın. [+50 XP]'
+                    },
+                    {
+                        title: '14. Adım: Listeler (Lists)',
+                        desc: 'Birden fazla veriyi tek değişkende tutmak için [ ] ile Liste oluşturulur.',
+                        mission: 'diller = ["Python", "JS", "C++"] oluştur ve print(diller[0]) yazdır.',
+                        tip: 'İpucu: İlk eleman [0] indeksindedir.',
+                        starterCode: '# diller listesini olustur ve 0. elemani yazdir:\n',
+                        solutionCode: 'diller = ["Python", "JS", "C++"]\nprint(diller[0])',
+                        validate: (code) => /diller\s*=\s*\[.*\]/.test(code) && /print\s*\(\s*diller\s*\[\s*0\s*\]\s*\)/.test(code),
+                        successMsg: 'Süper! Listeleri öğrendin. [+50 XP]'
+                    },
+                    {
+                        title: '15. Adım: Listeye Eleman Ekleme (append)',
+                        desc: 'Var olan bir listenin sonuna yeni veri eklemek için .append() kullanılır.',
+                        mission: 'takim = ["Ege"] listesine takim.append("Ali") ekle ve print(takim) yazdır.',
+                        tip: 'İpucu: takim.append("Ali")',
+                        starterCode: 'takim = ["Ege"]\n# append ile eleman ekle:\n',
+                        solutionCode: 'takim = ["Ege"]\ntakim.append("Ali")\nprint(takim)',
+                        validate: (code) => /takim\.append\s*\(/.test(code) && /print\s*\(\s*takim\s*\)/.test(code),
+                        successMsg: 'Mükemmel! Dinamik liste yönetimini kavradın. [+50 XP]'
+                    },
+                    {
+                        title: '16. Adım: Fonksiyon ve Return (Final)',
+                        desc: 'Fonksiyonlar parametre alıp sonuç döndürebilir (return).',
+                        mission: 'def kare_al(x): return x * x fonksiyonunu yaz ve print(kare_al(5)) ile çağır.',
+                        tip: 'İpucu: return kelimesi hesaplanan sonucu dışarıya aktarır.',
+                        starterCode: 'def kare_al(x):\n    return x * x\n\n# Fonksiyonu 5 degeriyle cagir ve yazdir:\n',
+                        solutionCode: 'def kare_al(x):\n    return x * x\n\nprint(kare_al(5))',
+                        validate: (code) => /def\s+kare_al\s*\(\s*x\s*\)\s*:/.test(code) && /kare_al\s*\(\s*5\s*\)/.test(code),
+                        successMsg: 'TEBRİKLER! Python 16/16 tamamlandı! [+100 XP]'
+                    }
+                ]
+            },
+            javascript: {
+                file: 'junior_app.js',
+                steps: [
+                    {
+                        title: '1. Adım: Konsol Çıktısı (console.log)',
+                        desc: 'JavaScript web tarayıcılarının ana dilidir. Konsola yazı yazdırmak için console.log() kullanılır.',
+                        mission: 'console.log("Ege JS Basladi"); yazarak konsola çıktı ver.',
+                        tip: 'İpucu: Yazdığın JS kodu tarayıcında gerçek zamanlı çalışır!',
+                        starterCode: '// Konsola mesaj yazdir:\n',
+                        solutionCode: 'console.log("Ege JS Basladi");',
+                        validate: (code) => /console\.log\s*\(.*ege.*\)/i.test(code),
+                        successMsg: 'Harika! İlk JavaScript komutunu çalıştırdın. [+50 XP]'
+                    },
+                    {
+                        title: '2. Adım: Değişkenler (let ve const)',
+                        desc: 'Değeri değişebilen veriler için let, sabit kalacak veriler için const kullanılır.',
+                        mission: 'const isim = "Ege"; ve let seviye = 1; tanımlayıp console.log(isim, seviye); yazdır.',
+                        tip: 'İpucu: Satır sonlarına noktalı virgül (;) koy.',
+                        starterCode: '// isim ve seviye degiskenlerini tanimla:\n',
+                        solutionCode: 'const isim = "Ege";\nlet seviye = 1;\nconsole.log(isim, seviye);',
+                        validate: (code) => /const\s+isim/.test(code) && /let\s+seviye/.test(code) && /console\.log/.test(code),
+                        successMsg: 'Süper! Modern JS değişken kurallarını öğrendin. [+50 XP]'
+                    },
+                    {
+                        title: '3. Adım: Matematiksel İşlemler',
+                        desc: 'JavaScript ile değişkenler üzerinde toplama, çıkarma, çarpma ve bölme yapabilirsin.',
+                        mission: 'let a = 15; let b = 25; tanımla ve console.log(a + b); yazdır.',
+                        tip: 'İpucu: console.log(a + b);',
+                        starterCode: 'let a = 15;\nlet b = 25;\n// Toplami yazdir:\n',
+                        solutionCode: 'let a = 15;\nlet b = 25;\nconsole.log(a + b);',
+                        validate: (code) => /console\.log\s*\(\s*a\s*\+\s*b\s*\)/.test(code),
+                        successMsg: 'Mükemmel! JS matematik motorunu kullandın. [+50 XP]'
+                    },
+                    {
+                        title: '4. Adım: Template Literals (`Backtick`)',
+                        desc: 'Backtick (` `) işaretleri içinde ${degisken} kullanarak metinlerin içine değişken yerleştirebilirsin.',
+                        mission: 'let oyuncu = "Ege"; tanımla ve console.log(`Hos geldin ${oyuncu}`); yazdır.',
+                        tip: 'İpucu: AltGr + , ile backtick yapabilirsin.',
+                        starterCode: 'let oyuncu = "Ege";\n// Backtick ile yazdir:\n',
+                        solutionCode: 'let oyuncu = "Ege";\nconsole.log(`Hos geldin ${oyuncu}`);',
+                        validate: (code) => /\$\{\s*oyuncu\s*\}/.test(code) && /console\.log/.test(code),
+                        successMsg: 'Harika! Modern string formatlamayı öğrendin. [+50 XP]'
+                    },
+                    {
+                        title: '5. Adım: Mantıksal Operatörler (&& ve ||)',
+                        desc: 'VE operatörü (&&) iki şartın da doğru olmasını ister.',
+                        mission: 'let sifre = true; let kod = true; tanımla ve console.log(sifre && kod); yazdır.',
+                        tip: 'İpucu: console.log(sifre && kod);',
+                        starterCode: 'let sifre = true;\nlet kod = true;\n// VE operatoru ile kontrol et:\n',
+                        solutionCode: 'let sifre = true;\nlet kod = true;\nconsole.log(sifre && kod);',
+                        validate: (code) => /sifre\s*&&\s*kod/.test(code) && /console\.log/.test(code),
+                        successMsg: 'Süper! Mantık kapılarını kavradın. [+50 XP]'
+                    },
+                    {
+                        title: '6. Adım: if Koşul Bloğu',
+                        desc: 'JavaScript’te koşullar ( ) içine, çalıştırılacak kod bloğu { } içine yazılır.',
+                        mission: 'let can = 20; olsun. if (can < 30) { console.log("Dikkat Can Az!"); } yaz.',
+                        tip: 'İpucu: Süslü parantezleri açıp kapatmayı unutma.',
+                        starterCode: 'let can = 20;\n// if blogunu yaz:\n',
+                        solutionCode: 'let can = 20;\nif (can < 30) {\n    console.log("Dikkat Can Az!");\n}',
+                        validate: (code) => /if\s*\(\s*can\s*<\s*30\s*\)/.test(code) && /console\.log/.test(code),
+                        successMsg: 'Mükemmel! JS karar mekanizmasını kurdun. [+50 XP]'
+                    },
+                    {
+                        title: '7. Adım: else if ve else',
+                        desc: 'Alternatif durumları kontrol etmek için else kullanılır.',
+                        mission: 'let not = 85; olsun. if (not >= 50) { console.log("Gecti"); } else { console.log("Kaldi"); } yaz.',
+                        tip: 'İpucu: >= büyük veya eşit demektir.',
+                        starterCode: 'let not = 85;\nif (not >= 50) {\n    console.log("Gecti");\n}\n// else blogunu ekle:\n',
+                        solutionCode: 'let not = 85;\nif (not >= 50) {\n    console.log("Gecti");\n} else {\n    console.log("Kaldi");\n}',
+                        validate: (code) => /if\s*\(\s*not\s*>=\s*50\s*\)/.test(code) && /else/.test(code),
+                        successMsg: 'Harika! Çoklu karar yapısını yazdın. [+50 XP]'
+                    },
+                    {
+                        title: '8. Adım: for Döngüsü',
+                        desc: 'Başlangıç, şart ve artış ifadeleriyle döngü kurulur.',
+                        mission: 'for (let i = 0; i < 5; i++) { console.log(i); } döngüsünü yaz.',
+                        tip: 'İpucu: i++ her turda i değerini 1 artırır.',
+                        starterCode: '// 0 dan 4 e kadar sayan for dongusu:\n',
+                        solutionCode: 'for (let i = 0; i < 5; i++) {\n    console.log(i);\n}',
+                        validate: (code) => /for\s*\(\s*let\s+i\s*=\s*0\s*;\s*i\s*<\s*5\s*;\s*i\+\+\s*\)/.test(code),
+                        successMsg: 'Süper! For döngüsünü öğrendin. [+50 XP]'
+                    },
+                    {
+                        title: '9. Adım: Diziler (Arrays)',
+                        desc: 'Dizilerin eleman sayısını öğrenmek için .length kullanılır.',
+                        mission: 'let renkler = ["Kirmizi", "Mavi", "Yesil"]; tanımla ve console.log(renkler.length); yazdır.',
+                        tip: 'İpucu: console.log(renkler.length);',
+                        starterCode: '// renkler dizisini olustur ve uzunlugunu yazdir:\n',
+                        solutionCode: 'let renkler = ["Kirmizi", "Mavi", "Yesil"];\nconsole.log(renkler.length);',
+                        validate: (code) => /renkler\s*=\s*\[.*\]/.test(code) && /renkler\.length/.test(code),
+                        successMsg: 'Mükemmel! Dizi uzunluğu ölçmeyi öğrendin. [+50 XP]'
+                    },
+                    {
+                        title: '10. Adım: Diziye Veri Ekleme (.push)',
+                        desc: 'Dizilerin sonuna eleman eklemek için .push() kullanılır.',
+                        mission: 'let sepet = ["Klavye"]; dizisine sepet.push("Mouse"); ekle ve console.log(sepet); yazdır.',
+                        tip: 'İpucu: sepet.push("Mouse");',
+                        starterCode: 'let sepet = ["Klavye"];\n// Mouse ekle ve yazdir:\n',
+                        solutionCode: 'let sepet = ["Klavye"];\nsepet.push("Mouse");\nconsole.log(sepet);',
+                        validate: (code) => /sepet\.push\s*\(/.test(code) && /console\.log/.test(code),
+                        successMsg: 'Harika! Dinamik dizi ekleme işlemini yaptın. [+50 XP]'
+                    },
+                    {
+                        title: '11. Adım: Dizi Üzerinde Döngü (forEach)',
+                        desc: 'Bir dizideki tüm elemanları gezmek için .forEach() kullanılır.',
+                        mission: 'let sayilar = [10, 20, 30]; dizisini sayilar.forEach(s => console.log(s)); ile yazdır.',
+                        tip: 'İpucu: sayilar.forEach(s => console.log(s));',
+                        starterCode: 'let sayilar = [10, 20, 30];\n// forEach ile tum elemanlari yazdir:\n',
+                        solutionCode: 'let sayilar = [10, 20, 30];\nsayilar.forEach(s => console.log(s));',
+                        validate: (code) => /sayilar\.forEach/.test(code) && /console\.log/.test(code),
+                        successMsg: 'Süper! Modern dizi iterasyonunu öğrendin. [+50 XP]'
+                    },
+                    {
+                        title: '12. Adım: Nesneler (Objects)',
+                        desc: 'Nesneler anahtar-değer (key: value) şeklinde özellikler tutar.',
+                        mission: 'const arac = { marka: "BMW", hiz: 260 }; oluştur ve console.log(arac.marka); yazdır.',
+                        tip: 'İpucu: arac.marka ile özelliğe ulaşılır.',
+                        starterCode: '// arac nesnesini olustur ve markasini yazdir:\n',
+                        solutionCode: 'const arac = { marka: "BMW", hiz: 260 };\nconsole.log(arac.marka);',
+                        validate: (code) => /arac\s*=\s*\{.*marka.*:.*\}/.test(code) && /arac\.marka/.test(code),
+                        successMsg: 'Mükemmel! Nesne yapısının temelini attın. [+50 XP]'
+                    },
+                    {
+                        title: '13. Adım: Fonksiyon Tanımlama',
+                        desc: 'Tekrar kullanılabilir kod blokları için function kullanılır.',
+                        mission: 'function carp(x, y) { return x * y; } yaz ve console.log(carp(6, 7)); ile çalıştır.',
+                        tip: 'İpucu: console.log(carp(6, 7));',
+                        starterCode: 'function carp(x, y) {\n    return x * y;\n}\n// Fonksiyonu cagir:\n',
+                        solutionCode: 'function carp(x, y) {\n    return x * y;\n}\nconsole.log(carp(6, 7));',
+                        validate: (code) => /function\s+carp/.test(code) && /carp\s*\(\s*6\s*,\s*7\s*\)/.test(code),
+                        successMsg: 'Harika! Fonksiyonel programlamaya giriş yaptın. [+50 XP]'
+                    },
+                    {
+                        title: '14. Adım: Arrow Functions (Ok Fonksiyonları)',
+                        desc: 'ES6 ile gelen modern fonksiyon yazımı: const topla = (a, b) => a + b;',
+                        mission: 'const topla = (a, b) => a + b; yaz ve console.log(topla(12, 8)); ile yazdır.',
+                        tip: 'İpucu: Tek satırlık ok fonksiyonlarında return gerekmez.',
+                        starterCode: '// Arrow function tanimla:\n',
+                        solutionCode: 'const topla = (a, b) => a + b;\nconsole.log(topla(12, 8));',
+                        validate: (code) => /const\s+topla\s*=\s*\(.*\)\s*=>/.test(code) && /topla\s*\(/.test(code),
+                        successMsg: 'Süper! Modern JS sözdizimini öğrendin. [+50 XP]'
+                    },
+                    {
+                        title: '15. Adım: Dizi Filtreleme (.filter)',
+                        desc: 'Şartı sağlayan elemanları seçmek için .filter() kullanılır.',
+                        mission: 'let notlar = [40, 75, 90, 30]; içinden notlar.filter(n => n > 50) ile süz ve yazdır.',
+                        tip: 'İpucu: let gecenler = notlar.filter(n => n > 50); console.log(gecenler);',
+                        starterCode: 'let notlar = [40, 75, 90, 30];\n// 50 den buyukleri filtrele ve yazdir:\n',
+                        solutionCode: 'let notlar = [40, 75, 90, 30];\nlet gecenler = notlar.filter(n => n > 50);\nconsole.log(gecenler);',
+                        validate: (code) => /notlar\.filter/.test(code) && /console\.log/.test(code),
+                        successMsg: 'Mükemmel! Veri filtreleme algoritmasını uyguladın. [+50 XP]'
+                    },
+                    {
+                        title: '16. Adım: Mini Uygulama: Skor Hesaplayıcı (Final)',
+                        desc: 'Değişken, koşul ve fonksiyonları birleştirerek puan sistemi kur!',
+                        mission: 'bonusHesapla(120) fonksiyonunu çağır ve sonucu console.log ile yazdır.',
+                        tip: 'İpucu: console.log(bonusHesapla(120));',
+                        starterCode: 'function bonusHesapla(puan) {\n    if (puan >= 100) {\n        return puan + 50;\n    }\n    return puan;\n}\n// 120 puan ile test et ve yazdir:\n',
+                        solutionCode: 'function bonusHesapla(puan) {\n    if (puan >= 100) {\n        return puan + 50;\n    }\n    return puan;\n}\nconsole.log(bonusHesapla(120));',
+                        validate: (code) => /function\s+bonusHesapla/.test(code) && /bonusHesapla\s*\(\s*120\s*\)/.test(code),
+                        successMsg: 'EFSANE! JavaScript 16/16 tamamlandı! [+100 XP]'
+                    }
+                ]
+            },
+            cpp: {
+                file: 'junior_core.cpp',
+                steps: [
+                    {
+                        title: '1. Adım: C++ Standart Çıktı (cout)',
+                        desc: 'C++ oyun motorları ve sistem yazılımlarının dilidir. Ekrana yazı yazmak için cout << "metin"; kullanılır.',
+                        mission: 'cout << "Ege"; komutunu yazarak ekrana ismini yazdır.',
+                        tip: 'İpucu: C++’ta her komutun sonuna noktalı virgül (;) koymak zorunludur!',
+                        starterCode: '#include <iostream>\nusing namespace std;\n\nint main() {\n    // Buraya cout komutunu yaz:\n    \n    return 0;\n}',
+                        solutionCode: '#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Ege";\n    return 0;\n}',
+                        validate: (code) => /cout\s*<<\s*["'].*ege.*["']\s*;/i.test(code),
+                        successMsg: 'Harika! İlk C++ kodunu derledin. [+50 XP]'
+                    },
+                    {
+                        title: '2. Adım: Yeni Satıra Geçme (endl)',
+                        desc: 'C++’ta alt satıra geçmek için << endl; komutu kullanılır.',
+                        mission: 'cout << "Satir 1" << endl; komutunu yaz.',
+                        tip: 'İpucu: cout << "Satir 1" << endl;',
+                        starterCode: 'int main() {\n    // endl ile satir sonu ekle:\n    \n    return 0;\n}',
+                        solutionCode: 'int main() {\n    cout << "Satir 1" << endl;\n    return 0;\n}',
+                        validate: (code) => /cout\s*<<.*<<\s*endl\s*;/.test(code),
+                        successMsg: 'Süper! Akış operatörlerini öğrendin. [+50 XP]'
+                    },
+                    {
+                        title: '3. Adım: Tam Sayı Tipi (int)',
+                        desc: 'Tam sayı tanımlarken başına int yazılır.',
+                        mission: 'int fps = 240; tanımla ve cout << fps; ile yazdır.',
+                        tip: 'İpucu: int fps = 240;',
+                        starterCode: 'int main() {\n    // fps degiskeni olustur:\n    \n    return 0;\n}',
+                        solutionCode: 'int main() {\n    int fps = 240;\n    cout << fps;\n    return 0;\n}',
+                        validate: (code) => /int\s+fps\s*=\s*\d+\s*;/.test(code) && /cout\s*<<\s*fps\s*;/.test(code),
+                        successMsg: 'Mükemmel! Bellek tipi tanımlamayı öğrendin. [+50 XP]'
+                    },
+                    {
+                        title: '4. Adım: Ondalıklı Sayı Tipi (double)',
+                        desc: 'Hassas ondalıklı sayılar için double kullanılır.',
+                        mission: 'double pi = 3.14; tanımla ve cout << pi; yazdır.',
+                        tip: 'İpucu: double pi = 3.14;',
+                        starterCode: 'int main() {\n    // double pi tanimla:\n    \n    return 0;\n}',
+                        solutionCode: 'int main() {\n    double pi = 3.14;\n    cout << pi;\n    return 0;\n}',
+                        validate: (code) => /double\s+pi\s*=\s*3\.14\s*;/.test(code) && /cout\s*<<\s*pi\s*;/.test(code),
+                        successMsg: 'Harika! Double veri tipini kullandın. [+50 XP]'
+                    },
+                    {
+                        title: '5. Adım: Tek Karakter Tipi (char)',
+                        desc: 'Tek bir harf saklamak için char tipi ve tek tırnak (\'S\') kullanılır.',
+                        mission: 'char seviye = \'S\'; tanımla ve cout << seviye; yazdır.',
+                        tip: 'İpucu: char seviye = \'S\';',
+                        starterCode: 'int main() {\n    // char seviye tanimla:\n    \n    return 0;\n}',
+                        solutionCode: "int main() {\n    char seviye = 'S';\n    cout << seviye;\n    return 0;\n}",
+                        validate: (code) => /char\s+seviye\s*=\s*['"][A-Za-z]['"]\s*;/.test(code) && /cout\s*<<\s*seviye\s*;/.test(code),
+                        successMsg: 'Süper! Char bellek yapısını öğrendin. [+50 XP]'
+                    },
+                    {
+                        title: '6. Adım: Mantıksal Tip (bool)',
+                        desc: 'Doğru/yanlış değerleri bool tipiyle tutulur.',
+                        mission: 'bool aktif = true; tanımla ve cout << aktif; yazdır.',
+                        tip: 'İpucu: bool aktif = true;',
+                        starterCode: 'int main() {\n    // bool aktif tanimla:\n    \n    return 0;\n}',
+                        solutionCode: 'int main() {\n    bool aktif = true;\n    cout << aktif;\n    return 0;\n}',
+                        validate: (code) => /bool\s+aktif\s*=\s*true\s*;/.test(code) && /cout\s*<<\s*aktif\s*;/.test(code),
+                        successMsg: 'Mükemmel! Boolean veri tipini kavradın. [+50 XP]'
+                    },
+                    {
+                        title: '7. Adım: Metin Tipi (string)',
+                        desc: 'Uzun metinler için string tipi kullanılır.',
+                        mission: 'string nick = "Dunex"; tanımla ve cout << nick; yazdır.',
+                        tip: 'İpucu: string nick = "Dunex";',
+                        starterCode: 'int main() {\n    // string nick tanimla:\n    \n    return 0;\n}',
+                        solutionCode: 'int main() {\n    string nick = "Dunex";\n    cout << nick;\n    return 0;\n}',
+                        validate: (code) => /string\s+nick\s*=\s*["'].*["']\s*;/.test(code) && /cout\s*<<\s*nick\s*;/.test(code),
+                        successMsg: 'Harika! C++ string sınıfını kullandın. [+50 XP]'
+                    },
+                    {
+                        title: '8. Adım: Sabit Değerler (const)',
+                        desc: 'Değişmeyecek değerler const ile kilitlenir.',
+                        mission: 'const int MAX_CAN = 100; tanımla ve cout << MAX_CAN; yazdır.',
+                        tip: 'İpucu: const int MAX_CAN = 100;',
+                        starterCode: 'int main() {\n    // const int MAX_CAN tanimla:\n    \n    return 0;\n}',
+                        solutionCode: 'int main() {\n    const int MAX_CAN = 100;\n    cout << MAX_CAN;\n    return 0;\n}',
+                        validate: (code) => /const\s+int\s+MAX_CAN\s*=\s*100\s*;/.test(code) && /cout\s*<<\s*MAX_CAN\s*;/.test(code),
+                        successMsg: 'Süper! Sabit bellek koruması öğrendin. [+50 XP]'
+                    },
+                    {
+                        title: '9. Adım: Aritmetik İşlemler',
+                        desc: 'Değişkenleri toplayıp yeni bir değişkene atayabilirsin.',
+                        mission: 'int toplam = a + b; yaz ve cout << toplam; ile yazdır.',
+                        tip: 'İpucu: int toplam = a + b;',
+                        starterCode: 'int main() {\n    int a = 10;\n    int b = 20;\n    // toplam degiskeni olustur ve yazdir:\n    \n    return 0;\n}',
+                        solutionCode: 'int main() {\n    int a = 10;\n    int b = 20;\n    int toplam = a + b;\n    cout << toplam;\n    return 0;\n}',
+                        validate: (code) => /int\s+toplam\s*=\s*a\s*\+\s*b\s*;/.test(code) && /cout\s*<<\s*toplam\s*;/.test(code),
+                        successMsg: 'Mükemmel! Değişken aritmetiğini çalıştırdın. [+50 XP]'
+                    },
+                    {
+                        title: '10. Adım: Karar Yapısı (if)',
+                        desc: 'Koşullar ( ) içine, kod bloğu { } içine yazılır.',
+                        mission: 'int skor = 500; iken if (skor > 300) { cout << "Rekor!"; } yaz.',
+                        tip: 'İpucu: cout << "Rekor!";',
+                        starterCode: 'int main() {\n    int skor = 500;\n    // if blogunu yaz:\n    \n    return 0;\n}',
+                        solutionCode: 'int main() {\n    int skor = 500;\n    if (skor > 300) {\n        cout << "Rekor!";\n    }\n    return 0;\n}',
+                        validate: (code) => /if\s*\(\s*skor\s*>\s*300\s*\)/.test(code) && /cout\s*<<\s*["']Rekor!["']\s*;/.test(code),
+                        successMsg: 'Harika! C++ koşul kontrolünü kurdun. [+50 XP]'
+                    },
+                    {
+                        title: '11. Adım: if - else Bloğu',
+                        desc: 'Koşul yanlış olduğunda else bloğu devreye girer.',
+                        mission: 'else bloğunun içine cout << "Bos"; yaz.',
+                        tip: 'İpucu: else { cout << "Bos"; }',
+                        starterCode: 'int main() {\n    int cephane = 0;\n    if (cephane > 0) {\n        cout << "Ates";\n    }\n    // else blogunu ekle:\n    \n    return 0;\n}',
+                        solutionCode: 'int main() {\n    int cephane = 0;\n    if (cephane > 0) {\n        cout << "Ates";\n    } else {\n        cout << "Bos";\n    }\n    return 0;\n}',
+                        validate: (code) => /if\s*\(\s*cephane\s*>\s*0\s*\)/.test(code) && /else/.test(code) && /cout\s*<<\s*["']Bos["']\s*;/.test(code),
+                        successMsg: 'Süper! Oyun mekaniği mantığını C++ ile yazdın. [+50 XP]'
+                    },
+                    {
+                        title: '12. Adım: for Döngüsü',
+                        desc: 'Yüksek hızlı döngüler C++’ın en güçlü yanıdır.',
+                        mission: 'for (int i = 0; i < 3; i++) { cout << i; } döngüsünü yaz.',
+                        tip: 'İpucu: int i = 0;',
+                        starterCode: 'int main() {\n    // 3 kez donen for dongusu:\n    \n    return 0;\n}',
+                        solutionCode: 'int main() {\n    for (int i = 0; i < 3; i++) {\n        cout << i;\n    }\n    return 0;\n}',
+                        validate: (code) => /for\s*\(\s*int\s+i\s*=\s*0\s*;\s*i\s*<\s*3\s*;\s*i\+\+\s*\)/.test(code) && /cout\s*<<\s*i\s*;/.test(code),
+                        successMsg: 'Mükemmel! C++ döngü yapısını çalıştırdın. [+50 XP]'
+                    },
+                    {
+                        title: '13. Adım: while Döngüsü',
+                        desc: 'Şart sağlandığı sürece çalışan döngüdür.',
+                        mission: 'int n = 3; while (n > 0) { cout << n; n--; } yaz.',
+                        tip: 'İpucu: n-- her turda n sayısını 1 azaltır.',
+                        starterCode: 'int main() {\n    int n = 3;\n    // while dongusunu yaz:\n    \n    return 0;\n}',
+                        solutionCode: 'int main() {\n    int n = 3;\n    while (n > 0) {\n        cout << n;\n        n--;\n    }\n    return 0;\n}',
+                        validate: (code) => /while\s*\(\s*n\s*>\s*0\s*\)/.test(code) && /n--/.test(code),
+                        successMsg: 'Harika! Geri sayım döngüsünü kurdun. [+50 XP]'
+                    },
+                    {
+                        title: '14. Adım: Sabit Diziler (Arrays)',
+                        desc: 'Aynı tipteki verileri yan yana tutmak için dizi tanımlanır.',
+                        mission: 'int notlar[3] = {80, 90, 100}; tanımla ve cout << notlar[2]; yazdır.',
+                        tip: 'İpucu: cout << notlar[2];',
+                        starterCode: 'int main() {\n    // notlar dizisini olustur ve 2. indeksi yazdir:\n    \n    return 0;\n}',
+                        solutionCode: 'int main() {\n    int notlar[3] = {80, 90, 100};\n    cout << notlar[2];\n    return 0;\n}',
+                        validate: (code) => /int\s+notlar\s*\[\s*3\s*\]\s*=/.test(code) && /cout\s*<<\s*notlar\s*\[\s*2\s*\]\s*;/.test(code),
+                        successMsg: 'Süper! C++ bellek dizilerini öğrendin. [+50 XP]'
+                    },
+                    {
+                        title: '15. Adım: Void Fonksiyonlar',
+                        desc: 'Geriye değer döndürmeyen fonksiyonların başına void yazılır.',
+                        mission: 'main içinde uyari(); fonksiyonunu çağır.',
+                        tip: 'İpucu: uyari();',
+                        starterCode: 'void uyari() {\n    cout << "Sistem Aktif";\n}\n\nint main() {\n    // uyari fonksiyonunu cagir:\n    \n    return 0;\n}',
+                        solutionCode: 'void uyari() {\n    cout << "Sistem Aktif";\n}\n\nint main() {\n    uyari();\n    return 0;\n}',
+                        validate: (code) => /void\s+uyari\s*\(\s*\)/.test(code) && (code.match(/uyari\s*\(\s*\)/g) || []).length >= 2,
+                        successMsg: 'Mükemmel! Modüler C++ fonksiyonlarını kavradın. [+50 XP]'
+                    },
+                    {
+                        title: '16. Adım: Değer Döndüren Fonksiyon (Final)',
+                        desc: 'Tam sayı döndüren fonksiyonların başına int yazılır ve return ile sonuç gönderilir.',
+                        mission: 'main içinde cout << topla(15, 25); ile yazdır.',
+                        tip: 'İpucu: cout << topla(15, 25);',
+                        starterCode: 'int topla(int x, int y) {\n    return x + y;\n}\n\nint main() {\n    // topla(15, 25) sonucunu yazdir:\n    \n    return 0;\n}',
+                        solutionCode: 'int topla(int x, int y) {\n    return x + y;\n}\n\nint main() {\n    cout << topla(15, 25);\n    return 0;\n}',
+                        validate: (code) => /int\s+topla\s*\(\s*int\s+x\s*,\s*int\s+y\s*\)/.test(code) && /topla\s*\(\s*15\s*,\s*25\s*\)/.test(code),
+                        successMsg: 'EFSANE! C++ 16/16 tamamlandı! [+100 XP]'
+                    }
+                ]
+            }
+        };
+
+        let currentLang = 'html';
+        let currentStepIndex = 0;
+
+        let savedState = null;
+        try {
+            savedState = JSON.parse(localStorage.getItem('aegean_academy_progress'));
+        } catch (e) {}
+
+        let totalXP = savedState ? (savedState.totalXP || 0) : 0;
+        let completedSteps = savedState ? (savedState.completedSteps || {}) : {};
+
+        function saveProgress() {
+            try {
+                localStorage.setItem('aegean_academy_progress', JSON.stringify({
+                    totalXP,
+                    completedSteps
+                }));
+            } catch (e) {}
+        }
+
+        const langBtns = document.querySelectorAll('.lang-btn');
+        const xpBadge = document.getElementById('xpBadge');
+        const rankBadge = document.getElementById('rankBadge');
+        const stepProgressBar = document.getElementById('stepProgressBar');
+        const jumpStepInput = document.getElementById('jumpStepInput');
+        const jumpStepBtn = document.getElementById('jumpStepBtn');
+        const stepIndicator = document.getElementById('stepIndicator');
+        const stepStatusTag = document.getElementById('stepStatusTag');
+        const lessonTitle = document.getElementById('lessonTitle');
+        const lessonDesc = document.getElementById('lessonDesc');
+        const missionText = document.getElementById('missionText');
+        const lessonTip = document.getElementById('lessonTip');
+        const editorFileName = document.getElementById('editorFileName');
+        const codeEditorArea = document.getElementById('codeEditorArea');
+        const consoleResult = document.getElementById('consoleResult');
+        const prevStepBtn = document.getElementById('prevStepBtn');
+        const nextStepBtn = document.getElementById('nextStepBtn');
+        const runCodeBtn = document.getElementById('runCodeBtn');
+        const resetCodeBtn = document.getElementById('resetCodeBtn');
+        const solveCodeBtn = document.getElementById('solveCodeBtn');
+
+        function getTotalStepsCount(lang) {
+            const langObj = lessonsData[lang];
+            return langObj.isDynamic ? langObj.total : langObj.steps.length;
+        }
+
+        function getStepObject(lang, index) {
+            const langObj = lessonsData[lang];
+            if (langObj.isDynamic) {
+                return getHtmlStep(index);
+            }
+            return langObj.steps[index];
+        }
+
+        function updateStatsUI() {
+            const doneCount = Object.keys(completedSteps).length;
+            xpBadge.textContent = `⚡ XP: ${totalXP} (${doneCount}/10048)`;
+
+            rankBadge.classList.remove('developer-god');
+
+            if (doneCount >= 10000) {
+                rankBadge.textContent = '👑DEVELOPER👑';
+                rankBadge.classList.add('developer-god');
+            } else if (doneCount >= 7000) {
+                rankBadge.textContent = '💎 Principal Engineer';
+            } else if (doneCount >= 3500) {
+                rankBadge.textContent = '⚡ Tech Lead';
+            } else if (doneCount >= 1000) {
+                rankBadge.textContent = '🔥 Senior Architect';
+            } else if (doneCount >= 250) {
+                rankBadge.textContent = '💠 Mid-Level Coder';
+            } else if (doneCount >= 15) {
+                rankBadge.textContent = '⭐ Kod Ustası';
+            } else if (doneCount >= 5) {
+                rankBadge.textContent = '🥇 Junior Geliştirici';
+            } else if (doneCount >= 2) {
+                rankBadge.textContent = '🥈 Stajyer Coder';
+            } else {
+                rankBadge.textContent = '🥉 Çaylak';
+            }
+        }
+
+        function renderProgressBar() {
+            const total = getTotalStepsCount(currentLang);
+            stepProgressBar.innerHTML = '';
+
+            if (total > 50) {
+                const track = document.createElement('div');
+                track.className = 'smooth-track';
+                const fill = document.createElement('div');
+                fill.className = 'smooth-fill';
+                const pct = Math.min(100, ((currentStepIndex + 1) / total) * 100);
+                fill.style.width = `${pct}%`;
+                track.appendChild(fill);
+                stepProgressBar.appendChild(track);
+            } else {
+                for (let idx = 0; idx < total; idx++) {
+                    const pill = document.createElement('div');
+                    pill.className = 'step-pill';
+                    pill.title = `Adım ${idx + 1}`;
+                    const key = `${currentLang}-${idx}`;
+                    if (completedSteps[key]) pill.classList.add('done');
+                    else if (idx === currentStepIndex) pill.classList.add('current');
+
+                    pill.addEventListener('click', () => {
+                        currentStepIndex = idx;
+                        loadLesson();
+                    });
+
+                    stepProgressBar.appendChild(pill);
+                }
+            }
+        }
+
+        function loadLesson() {
+            const langObj = lessonsData[currentLang];
+            const total = getTotalStepsCount(currentLang);
+            const step = getStepObject(currentLang, currentStepIndex);
+            const key = `${currentLang}-${currentStepIndex}`;
+            const isDone = !!completedSteps[key];
+
+            jumpStepInput.max = total;
+            jumpStepInput.placeholder = `1-${total}`;
+
+            stepIndicator.textContent = `ADIM ${currentStepIndex + 1} / ${total}`;
+            lessonTitle.textContent = step.title;
+            lessonDesc.textContent = step.desc;
+            missionText.textContent = step.mission;
+            lessonTip.textContent = step.tip;
+            editorFileName.textContent = langObj.file;
+            codeEditorArea.value = isDone ? step.solutionCode : step.starterCode;
+
+            if (isDone) {
+                stepStatusTag.textContent = '✓ GÖREV TAMAMLANDI';
+                stepStatusTag.classList.add('completed');
+            } else {
+                stepStatusTag.textContent = 'GÖREV BEKLENİYOR';
+                stepStatusTag.classList.remove('completed');
+            }
+
+            consoleResult.style.color = '#00ffaa';
+            consoleResult.textContent = "Görevi tamamla ve 'ÇALIŞTIR & KONTROL ET' butonuna bas...";
+
+            prevStepBtn.disabled = currentStepIndex === 0;
+            nextStepBtn.disabled = currentStepIndex === total - 1;
+            renderProgressBar();
+        }
+
+        function jumpToStep() {
+            const total = getTotalStepsCount(currentLang);
+            const val = parseInt(jumpStepInput.value, 10);
+            if (!isNaN(val) && val >= 1 && val <= total) {
+                let newlyAdded = 0;
+                for (let i = 0; i < val; i++) {
+                    const k = `${currentLang}-${i}`;
+                    if (!completedSteps[k]) {
+                        completedSteps[k] = true;
+                        newlyAdded++;
+                    }
+                }
+                if (newlyAdded > 0) {
+                    totalXP += newlyAdded * 50;
+                    saveProgress();
+                    updateStatsUI();
+                }
+
+                currentStepIndex = val - 1;
+                jumpStepInput.value = '';
+                loadLesson();
+
+                consoleResult.style.color = '#00ffaa';
+                consoleResult.textContent = `⚡ ${val}. adıma atlandı! Rütben ve XP'n güncellendi -> ${rankBadge.textContent}`;
+            }
+        }
+
+        jumpStepBtn.addEventListener('click', jumpToStep);
+        jumpStepInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') jumpToStep();
+        });
+
+        langBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                langBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentLang = btn.getAttribute('data-lang');
+                currentStepIndex = 0;
+                loadLesson();
+            });
+        });
+
+        prevStepBtn.addEventListener('click', () => {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                loadLesson();
+            }
+        });
+
+        nextStepBtn.addEventListener('click', () => {
+            const max = getTotalStepsCount(currentLang) - 1;
+            if (currentStepIndex < max) {
+                currentStepIndex++;
+                loadLesson();
+            }
+        });
+
+        resetCodeBtn.addEventListener('click', () => {
+            const step = getStepObject(currentLang, currentStepIndex);
+            codeEditorArea.value = step.starterCode;
+            consoleResult.style.color = '#94a3b8';
+            consoleResult.textContent = 'Kod başlangıç haline sıfırlandı.';
+        });
+
+        solveCodeBtn.addEventListener('click', () => {
+            const step = getStepObject(currentLang, currentStepIndex);
+            codeEditorArea.value = step.solutionCode;
+            consoleResult.style.color = '#38bdf8';
+            consoleResult.textContent = 'Örnek çözüm editöre yüklendi. Şimdi ÇALIŞTIR butonuna basabilirsin.';
+        });
+
+        runCodeBtn.addEventListener('click', () => {
+            const userCode = codeEditorArea.value;
+
+            if (containsProfanity(userCode)) {
+                triggerSiteBan();
+                return;
+            }
+
+            const step = getStepObject(currentLang, currentStepIndex);
+            const key = `${currentLang}-${currentStepIndex}`;
+
+            let outputText = '';
+
+            if (currentLang === 'javascript') {
+                let logs = [];
+                const originalLog = console.log;
+                console.log = (...args) => logs.push(args.map(x => typeof x === 'object' ? JSON.stringify(x) : x).join(' '));
+                try {
+                    eval(userCode);
+                    outputText = logs.length > 0 ? logs.join('\n') : '(Kod çalıştı, konsol çıktısı yok)';
+                } catch (err) {
+                    consoleResult.style.color = '#ff4d4d';
+                    consoleResult.textContent = '[SÖZDİZİMİ HATASI]: ' + err.message;
+                    return;
+                }
+                console.log = originalLog;
+            } else if (currentLang === 'python') {
+                const printMatches = [...userCode.matchAll(/print\s*\((.*?)\)/g)];
+                if (printMatches.length > 0) {
+                    outputText = printMatches.map(m => m[1].replace(/["']/g, '')).join('\n');
+                } else {
+                    outputText = '(Python kodu analiz edildi)';
+                }
+            } else if (currentLang === 'html') {
+                outputText = `[HTML5 RENDER BAŞARILI • ADIM ${currentStepIndex + 1}/10000]:\n` + userCode.trim();
+            } else if (currentLang === 'cpp') {
+                const coutMatches = [...userCode.matchAll(/cout\s*<<\s*(.*?)\s*;/g)];
+                outputText = coutMatches.length > 0
+                    ? coutMatches.map(m => m[1].replace(/["']/g, '').replace(/<<\s*endl/g, '')).join('\n')
+                    : '(C++ derlendi)';
+            }
+
+            const passed = step.validate(userCode);
+
+            if (passed) {
+                if (!completedSteps[key]) {
+                    completedSteps[key] = true;
+                    totalXP += (currentLang === 'html' && currentStepIndex === 9999) ? 500 : 50;
+                    saveProgress();
+                    updateStatsUI();
+                }
+                stepStatusTag.textContent = '✓ GÖREV TAMAMLANDI';
+                stepStatusTag.classList.add('completed');
+                renderProgressBar();
+
+                consoleResult.style.color = '#00ffaa';
+                consoleResult.textContent = `${outputText}\n\n✔ ${step.successMsg}`;
+            } else {
+                consoleResult.style.color = '#ffbd2e';
+                consoleResult.textContent = `${outputText}\n\n⚠ [GÖREV HENÜZ TAMAMLANMADI]: Sol taraftaki görevi kontrol et veya 'Çözümü Yaz' butonundan yardım al.`;
+            }
+        });
+
+        /* =========================================================
+           4. BÖLÜM SCRIPT: YAN TARAF EGE'NİN AI ASİSTANI (KISALTMA + BAN)
+           ========================================================= */
+        const connectAssistantBtn = document.getElementById('connectAssistantBtn');
+        const assistantSidebar = document.getElementById('assistantSidebar');
+        const closeAssistantBtn = document.getElementById('closeAssistantBtn');
+        const aiChatBody = document.getElementById('aiChatBody');
+        const aiUserInput = document.getElementById('aiUserInput');
+        const aiSendBtn = document.getElementById('aiSendBtn');
+        const quickChips = document.querySelectorAll('.quick-chip');
+
+        let assistantGreeted = false;
+
+        function appendAiBubble(text, sender = 'bot') {
+            const div = document.createElement('div');
+            div.className = `msg-bubble ${sender}`;
+            div.innerHTML = text.replace(/\n/g, '<br>');
+            aiChatBody.appendChild(div);
+            aiChatBody.scrollTop = aiChatBody.scrollHeight;
+        }
+
+        connectAssistantBtn.addEventListener('click', () => {
+            const isOpen = assistantSidebar.classList.toggle('open');
+            connectAssistantBtn.classList.toggle('connected', isOpen);
+
+            if (isOpen && !assistantGreeted) {
+                assistantGreeted = true;
+                appendAiBubble(`🔗 <b>Bağlantı Kuruldu!</b><br>Hoş geldin <b>@${loggedInCoderName}</b>! 10.000 adımlık HTML eğitimini tamamlayıp <b>👑DEVELOPER👑</b> rütbesine ulaşmanda sana yardım edeceğim!`, 'bot');
+            }
+            if (isOpen) aiUserInput.focus();
+        });
+
+        closeAssistantBtn.addEventListener('click', () => {
+            assistantSidebar.classList.remove('open');
+            connectAssistantBtn.classList.remove('connected');
+        });
+
+        function generateSmartReply(rawQuestion) {
+            const q = rawQuestion.toLowerCase().trim();
+            const currentStep = getStepObject(currentLang, currentStepIndex);
+
+            if (/^(sa|s\.a|selamün aleyküm|selamun aleykum)$/.test(q)) {
+                return `<b>As @${loggedInCoderName}</b>, hoş geldin! Ege'nin asistanı emrinde, hangi dilde kod yazıyoruz?`;
+            }
+            if (/^(slm|selam|mrb|merhaba|hey)$/.test(q)) {
+                return `Selam @${loggedInCoderName}! 10.000 adımlık HTML eğitiminde takıldığın yerleri veya kısaltmalarla sohbeti sorabilirsin!`;
+            }
+            if (/^(naber|nbr|nasılsın|nasilsin|nslsn|ne haber)$/.test(q)) {
+                return "İyiyim, sistemlerim %100 performansla çalışıyor! Senden naber?";
+            }
+            if (/^(iyiyim|ii|iyi|iyidir|bende iyi|ben de iyiyim|süper|super)$/.test(q)) {
+                return "Harika! Enerjin yüksekse 👑DEVELOPER👑 rütbesi yolunda yeni bir adıma geçelim!";
+            }
+            if (/^(kötü|kotu|kötüyüm|yorgunum|sıkıldım)$/.test(q)) {
+                return "Canını sıkma, biraz kod yazıp kafa dağıtalım. İstersen 'Çözümü Yaz' butonuyla hızlanabilirsin!";
+            }
+            if (/^(eyw|eyvallah|sağol|sagol|tşk|tsk|teşekkürler|tesekkurler)$/.test(q)) {
+                return "Ne demek, her zaman buradayım! Başka sorun varsa sorabilirsin.";
+            }
+            if (/^(knk|kanka|aga|reis|kral)$/.test(q)) {
+                return "Efendim kanka! Hangi adımda takıldın, hemen çözelim.";
+            }
+            if (/^(bb|bay|görüşürüz|gorusuruz|bye)$/.test(q)) {
+                return "Görüşürüz! Kodlamaya ara verme, sistem her zaman açık.";
+            }
+            if (/^(tm|tmm|tamam|ok|okey)$/.test(q)) {
+                return "Tamamdır, sıradaki hamleni bekliyorum!";
+            }
+
+            if (q.includes("rütbe") || q.includes("rank")) {
+                return "🏆 <b>Rütbe Sıralaması:</b><br>🥉 Çaylak (0+)<br>🥈 Stajyer Coder (2+)<br>🥇 Junior Geliştirici (5+)<br>⭐ Kod Ustası (15+)<br>💠 Mid-Level Coder (250+)<br>🔥 Senior Architect (1.000+)<br>⚡ Tech Lead (3.500+)<br>💎 Principal Engineer (7.000+)<br><b>👑DEVELOPER👑 (10.000 Adım!)</b>";
+            }
+
+            if (q.includes("kimsin") || q.includes("adın ne") || q.includes("seni kim yaptı")) {
+                return "Ben <b>Ege AI Asistan</b>. Ege tarafından tasarlanan bu 10.000 adımlık yazılım akademisinde sana rehberlik etmek için buradayım.";
+            }
+
+            if (q.includes("görev") || q.includes("yardım") || q.includes("nasıl yaparım") || q.includes("çözüm") || q.includes("bu adım")) {
+                return `Şu an <b>${currentLang.toUpperCase()}</b> dilinde <b>${currentStep.title}</b> aşamasındasın.<br><br><b>Yapman gereken:</b> ${currentStep.mission}<br><br><b>Örnek Kod:</b><br><code style="color:#00ffaa;">${currentStep.solutionCode.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</code>`;
+            }
+
+            const mathMatch = q.match(/(\d+(?:\.\d+)?)\s*([\+\-\*\/x×÷])\s*(\d+(?:\.\d+)?)/);
+            if (mathMatch) {
+                const a = parseFloat(mathMatch[1]);
+                const op = mathMatch[2];
+                const b = parseFloat(mathMatch[3]);
+                let res = 0;
+                if (op === '+') res = a + b;
+                else if (op === '-') res = a - b;
+                else if (op === '*' || op === 'x' || op === '×') res = a * b;
+                else if (op === '/' || op === '÷') res = b !== 0 ? (a / b).toFixed(2) : "Sıfıra bölünemez!";
+                return `🧮 Hesaplama Sonucu: <b>${a} ${op} ${b} = ${res}</b>`;
+            }
+
+            if (q.includes("html") || q.includes("css")) {
+                return "🌐 <b>HTML & CSS (10.000 Adım):</b> Etiketler, formlar, tablolar, semantik HTML5, CSS Box Model, Flexbox ve Grid sistemlerinin tamamını kapsar. 10.000 adımı bitirdiğinde <b>👑DEVELOPER👑</b> rütbesine ulaşırsın!";
+            }
+            if (q.includes("xp") || q.includes("puan")) {
+                const doneCount = Object.keys(completedSteps).length;
+                return `⚡ Toplam <b>${totalXP} XP</b> puanın var (<b>${doneCount}/10048</b> adım tamamlandı). Mevcut Rütben: <b>${rankBadge.textContent}</b>`;
+            }
+
+            return `Sorunu analiz ettim: <b>"${rawQuestion}"</b>.<br>Mevcut dersin çözümü için <b>"Bu göreve yardım et"</b> yazabilir veya yukarıdaki kutudan istediğin adıma doğrudan zıplayabilirsin!`;
+        }
+
+        function sendAiQuestion(customText = null) {
+            const text = customText || aiUserInput.value.trim();
+            if (!text) return;
+
+            if (containsProfanity(text)) {
+                triggerSiteBan();
+                return;
+            }
+
+            appendAiBubble(text, 'user');
+            if (!customText) aiUserInput.value = '';
+
+            const typingId = 'typing-' + Date.now();
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'msg-bubble bot';
+            typingDiv.id = typingId;
+            typingDiv.innerHTML = '<span style="color:#00f0ff;">Analiz ediliyor...</span>';
+            aiChatBody.appendChild(typingDiv);
+            aiChatBody.scrollTop = aiChatBody.scrollHeight;
+
+            setTimeout(() => {
+                const el = document.getElementById(typingId);
+                if (el) el.remove();
+                const reply = generateSmartReply(text);
+                appendAiBubble(reply, 'bot');
+            }, 400);
+        }
+
+        aiSendBtn.addEventListener('click', () => sendAiQuestion());
+        aiUserInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendAiQuestion();
+        });
+
+        quickChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                sendAiQuestion(chip.getAttribute('data-q'));
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            if (introActive) {
+                cWidth = cyberCanvas.width = document.documentElement.clientWidth;
+                cHeight = cyberCanvas.height = document.documentElement.clientHeight;
+            }
+            if (mainApp.classList.contains('active')) {
+                mWidth = matrixCanvas.width = document.documentElement.clientWidth;
+                mHeight = matrixCanvas.height = document.documentElement.clientHeight;
+            }
+        });
+    </script>
+</body>
+</html>
